@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true,
     proxy: {
       // 토지 실거래가 API (국토교통부, data.go.kr) — CORS 우회
       '/api/land-trade': {
