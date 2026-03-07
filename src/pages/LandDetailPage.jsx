@@ -1,27 +1,22 @@
 import { useState } from 'react';
 import { recentLands, priceHistory, nearbyLivestock } from '../data/dummyData';
+import { formatPrice, formatArea } from '../utils/format';
 
-function formatPrice(price) {
-  if (price >= 100000000) {
-    const eok = Math.floor(price / 100000000);
-    const man = Math.floor((price % 100000000) / 10000);
-    return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
-  }
-  return `${Math.floor(price / 10000).toLocaleString()}만원`;
-}
+const LIVESTOCK_ICONS = { 돈사: '🐷', 계사: '🐔', 우사: '🐄' };
 
 function RiskBar({ score }) {
-  const color = score >= 60 ? 'bg-red-500' : score >= 30 ? 'bg-orange-400' : 'bg-green-500';
-  const label = score >= 60 ? '높음' : score >= 30 ? '보통' : '낮음';
-  const textColor = score >= 60 ? 'text-red-600' : score >= 30 ? 'text-orange-600' : 'text-green-600';
+  const level =
+    score >= 60 ? { color: 'bg-red-500', text: 'text-red-600', label: '높음' } :
+    score >= 30 ? { color: 'bg-orange-400', text: 'text-orange-600', label: '보통' } :
+                  { color: 'bg-green-500', text: 'text-green-600', label: '낮음' };
   return (
     <div>
       <div className="flex justify-between items-center mb-1.5">
         <span className="text-sm text-gray-600">자경 의무 위반 위험도</span>
-        <span className={`text-sm font-bold ${textColor}`}>{score}점 ({label})</span>
+        <span className={`text-sm font-bold ${level.text}`}>{score}점 ({level.label})</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2.5">
-        <div className={`h-2.5 rounded-full transition-all ${color}`} style={{ width: `${score}%` }} />
+        <div className={`h-2.5 rounded-full transition-all ${level.color}`} style={{ width: `${score}%` }} />
       </div>
     </div>
   );
@@ -33,14 +28,13 @@ function PriceChart({ data }) {
     <div className="mt-3">
       <div className="flex items-end gap-2 h-24">
         {data.map((item, i) => {
-          const height = (item.avgPrice / maxPrice) * 100;
           const isLatest = i === data.length - 1;
           return (
             <div key={item.year} className="flex-1 flex flex-col items-center gap-1">
               <span className="text-xs text-gray-500 font-medium">{item.avgPrice.toLocaleString()}</span>
               <div
                 className={`w-full rounded-t-md transition-all ${isLatest ? 'bg-primary-500' : 'bg-primary-200'}`}
-                style={{ height: `${height}%` }}
+                style={{ height: `${(item.avgPrice / maxPrice) * 100}%` }}
               />
               <span className="text-xs text-gray-500">{item.year}</span>
             </div>
@@ -52,18 +46,30 @@ function PriceChart({ data }) {
   );
 }
 
-const livestockIcons = { '돈사': '🐷', '계사': '🐔', '우사': '🐄' };
+const TABS = [
+  { id: 'info', label: '기본정보' },
+  { id: 'price', label: '가격정보' },
+  { id: 'analysis', label: '분석' },
+];
+
+const RECENT_DEALS = [
+  { date: '2026-02', price: 92000, area: 2640, type: '전' },
+  { date: '2025-11', price: 88000, area: 1980, type: '전' },
+  { date: '2025-08', price: 85000, area: 3300, type: '답' },
+];
+
+const ENV_ITEMS = [
+  { label: '공장', count: 0, ok: true },
+  { label: '묘지', count: 1, ok: false },
+  { label: '송전탑', count: 0, ok: true },
+  { label: '군사시설', count: 0, ok: true },
+  { label: '도로 접면', count: 1, ok: true },
+  { label: '수원 접근', count: 1, ok: true },
+];
 
 export default function LandDetailPage({ land, onNavigate }) {
   const [activeTab, setActiveTab] = useState('info');
   const selectedLand = land || recentLands[0];
-  const ratio = selectedLand ? ((selectedLand.dealPrice / selectedLand.officialPrice) * 100).toFixed(0) : 0;
-
-  const tabs = [
-    { id: 'info', label: '기본정보' },
-    { id: 'price', label: '가격정보' },
-    { id: 'analysis', label: '분석' },
-  ];
 
   if (!selectedLand) {
     return (
@@ -81,33 +87,29 @@ export default function LandDetailPage({ land, onNavigate }) {
     );
   }
 
+  const ratio = ((selectedLand.dealPrice / selectedLand.officialPrice) * 100).toFixed(0);
+
   return (
     <div className="pb-4">
-      {/* Address Header */}
+      {/* 주소 헤더 */}
       <div className="bg-primary-700 px-4 py-5">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs bg-primary-500 text-white px-2 py-0.5 rounded-full">
-            {selectedLand.type}
-          </span>
+          <span className="text-xs bg-primary-500 text-white px-2 py-0.5 rounded-full">{selectedLand.type}</span>
           <span className="text-xs text-primary-200">농지</span>
         </div>
         <h2 className="text-white font-bold text-base leading-snug">{selectedLand.address}</h2>
-        <p className="text-primary-200 text-sm mt-1">
-          {selectedLand.area.toLocaleString()}㎡ (약 {Math.round(selectedLand.area / 3.3058)}평)
-        </p>
+        <p className="text-primary-200 text-sm mt-1">{formatArea(selectedLand.area)}</p>
       </div>
 
-      {/* Tabs */}
+      {/* 탭 */}
       <div className="bg-white sticky top-14 z-30 border-b border-gray-200">
         <div className="flex">
-          {tabs.map((tab) => (
+          {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === tab.id ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               {tab.label}
@@ -117,7 +119,7 @@ export default function LandDetailPage({ land, onNavigate }) {
       </div>
 
       <div className="px-4 mt-4">
-        {/* 기본정보 */}
+        {/* 기본정보 탭 */}
         {activeTab === 'info' && (
           <div className="space-y-4">
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -128,7 +130,7 @@ export default function LandDetailPage({ land, onNavigate }) {
                 {[
                   { label: '소재지', value: selectedLand.address },
                   { label: '지목', value: `${selectedLand.type} (농지)` },
-                  { label: '면적', value: `${selectedLand.area.toLocaleString()}㎡ (약 ${Math.round(selectedLand.area / 3.3058)}평)` },
+                  { label: '면적', value: formatArea(selectedLand.area) },
                   { label: '용도지역', value: '농림지역' },
                   { label: '개발제한구역', value: '해당 없음' },
                   { label: '농업진흥구역', value: '농업진흥지역 내' },
@@ -170,7 +172,7 @@ export default function LandDetailPage({ land, onNavigate }) {
           </div>
         )}
 
-        {/* 가격정보 */}
+        {/* 가격정보 탭 */}
         {activeTab === 'price' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
@@ -186,9 +188,7 @@ export default function LandDetailPage({ land, onNavigate }) {
                 <p className="text-xs text-gray-500 mb-1">인근 실거래가</p>
                 <p className="text-xl font-bold text-primary-700">{selectedLand.dealPrice.toLocaleString()}</p>
                 <p className="text-xs text-gray-400">원/㎡</p>
-                <p className="text-sm text-primary-600 mt-1 font-medium">
-                  공시가 대비 {ratio}%
-                </p>
+                <p className="text-sm text-primary-600 mt-1 font-medium">공시가 대비 {ratio}%</p>
               </div>
             </div>
 
@@ -201,12 +201,13 @@ export default function LandDetailPage({ land, onNavigate }) {
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2.5 mt-2">
                 <div
-                  className="h-2.5 rounded-full bg-primary-500 transition-all"
+                  className="h-2.5 rounded-full bg-primary-500"
                   style={{ width: `${Math.min(Number(ratio), 200) / 2}%` }}
                 />
               </div>
               <p className="text-xs text-gray-400 mt-2">
-                공시가의 {ratio}% 수준 — {Number(ratio) > 150 ? '고평가 구간' : Number(ratio) > 100 ? '적정 수준' : '저평가 가능성'}
+                공시가의 {ratio}% 수준 —{' '}
+                {Number(ratio) > 150 ? '고평가 구간' : Number(ratio) > 100 ? '적정 수준' : '저평가 가능성'}
               </p>
             </div>
 
@@ -214,11 +215,7 @@ export default function LandDetailPage({ land, onNavigate }) {
               <p className="text-sm font-bold text-gray-700 mb-1">최근 실거래 내역</p>
               <p className="text-xs text-gray-400 mb-3">인근 500m 이내 · 최근 3건</p>
               <div className="space-y-2">
-                {[
-                  { date: '2026-02', price: 92000, area: 2640, type: '전' },
-                  { date: '2025-11', price: 88000, area: 1980, type: '전' },
-                  { date: '2025-08', price: 85000, area: 3300, type: '답' },
-                ].map((deal, i) => (
+                {RECENT_DEALS.map((deal, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                     <div>
                       <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded mr-1">{deal.type}</span>
@@ -237,7 +234,7 @@ export default function LandDetailPage({ land, onNavigate }) {
           </div>
         )}
 
-        {/* 분석 */}
+        {/* 분석 탭 */}
         {activeTab === 'analysis' && (
           <div className="space-y-4">
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -266,7 +263,7 @@ export default function LandDetailPage({ land, onNavigate }) {
               <div className="space-y-3">
                 {nearbyLivestock.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
-                    <span className="text-2xl">{livestockIcons[item.type] || '🏠'}</span>
+                    <span className="text-2xl">{LIVESTOCK_ICONS[item.type] || '🏠'}</span>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{item.name}</p>
                       <p className="text-xs text-gray-500">{item.type} · {item.distance}m</p>
@@ -291,17 +288,8 @@ export default function LandDetailPage({ land, onNavigate }) {
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
               <p className="text-sm font-bold text-gray-700 mb-3">주변 환경 분석</p>
               <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: '공장', count: 0, ok: true },
-                  { label: '묘지', count: 1, ok: false },
-                  { label: '송전탑', count: 0, ok: true },
-                  { label: '군사시설', count: 0, ok: true },
-                  { label: '도로 접면', count: 1, ok: true },
-                  { label: '수원 접근', count: 1, ok: true },
-                ].map((env) => (
-                  <div key={env.label} className={`p-3 rounded-xl border text-center ${
-                    env.ok ? 'border-green-100 bg-green-50' : 'border-orange-100 bg-orange-50'
-                  }`}>
+                {ENV_ITEMS.map((env) => (
+                  <div key={env.label} className={`p-3 rounded-xl border text-center ${env.ok ? 'border-green-100 bg-green-50' : 'border-orange-100 bg-orange-50'}`}>
                     <span className="text-lg">{env.ok ? '✅' : '⚠️'}</span>
                     <p className="text-xs font-medium text-gray-700 mt-1">{env.label}</p>
                     <p className={`text-xs ${env.ok ? 'text-green-600' : 'text-orange-600'}`}>

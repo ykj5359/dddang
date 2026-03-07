@@ -1,5 +1,3 @@
-// 더미 데이터 (API 연동 전 UI 개발용)
-
 export const recentLands = [
   {
     id: 1,
@@ -51,6 +49,8 @@ export const listings = [
     contact: '010-1234-5678',
     images: [],
     createdAt: '2026-03-01',
+    lat: 37.3042,
+    lng: 127.6297,
   },
   {
     id: 2,
@@ -64,6 +64,8 @@ export const listings = [
     contact: '010-9876-5432',
     images: [],
     createdAt: '2026-02-28',
+    lat: 36.5983,
+    lng: 126.6628,
   },
   {
     id: 3,
@@ -129,57 +131,79 @@ export const priceHistory = [
 ];
 
 export const nearbyLivestock = [
-  { id: 1, name: '한빛 양돈장', type: '돈사', distance: 280, lat: 37.3062, lng: 127.6320 },
-  { id: 2, name: '초록 양계장', type: '계사', distance: 650, lat: 37.3010, lng: 127.6250 },
-  { id: 3, name: '하늘 한우농장', type: '우사', distance: 920, lat: 37.3080, lng: 127.6180 },
+  { id: 1, name: '한빛 양돈장', type: '돈사', distance: 280, lat: 37.3062, lng: 127.632 },
+  { id: 2, name: '초록 양계장', type: '계사', distance: 650, lat: 37.301, lng: 127.625 },
+  { id: 3, name: '하늘 한우농장', type: '우사', distance: 920, lat: 37.308, lng: 127.618 },
 ];
 
 export const newsItems = [
-  {
-    id: 1,
-    title: '2026년 농지법 개정안 주요 내용 안내',
-    date: '2026-03-05',
-    category: '농지법',
-  },
-  {
-    id: 2,
-    title: '귀농·귀촌 지원사업 신청 접수 시작',
-    date: '2026-03-03',
-    category: '귀농지원',
-  },
-  {
-    id: 3,
-    title: '농지 실거래가 전년 대비 8.5% 상승',
-    date: '2026-03-01',
-    category: '시장동향',
-  },
-  {
-    id: 4,
-    title: '농지신탁 제도 활용으로 처분 의무 해소하는 방법',
-    date: '2026-02-28',
-    category: '농지신탁',
-  },
+  { id: 1, title: '2026년 농지법 개정안 주요 내용 안내', date: '2026-03-05', category: '농지법' },
+  { id: 2, title: '귀농·귀촌 지원사업 신청 접수 시작', date: '2026-03-03', category: '귀농지원' },
+  { id: 3, title: '농지 실거래가 전년 대비 8.5% 상승', date: '2026-03-01', category: '시장동향' },
+  { id: 4, title: '농지신탁 제도 활용으로 처분 의무 해소하는 방법', date: '2026-02-28', category: '농지신탁' },
 ];
 
 export const farmingGuide = [
   {
     id: 1,
     title: '농지취득자격증명(농취증) 발급 방법',
-    content: '농지를 취득하려면 농지취득자격증명을 발급받아야 합니다. 농업경영계획서를 작성하여 해당 농지 소재지 읍·면사무소에 신청하면 됩니다. 처리 기간은 통상 4일 이내입니다.',
+    content:
+      '농지를 취득하려면 농지취득자격증명을 발급받아야 합니다. 농업경영계획서를 작성하여 해당 농지 소재지 읍·면사무소에 신청하면 됩니다. 처리 기간은 통상 4일 이내입니다.',
   },
   {
     id: 2,
     title: '농지 처분 의무 및 이행 강제금',
-    content: '비농업인이 농지를 취득한 경우 1년 이내에 처분해야 합니다. 기한 내 미처분 시 공시지가의 20%에 해당하는 이행강제금이 부과됩니다. 농지신탁이나 임대 등으로 합법적 보유가 가능합니다.',
+    content:
+      '비농업인이 농지를 취득한 경우 1년 이내에 처분해야 합니다. 기한 내 미처분 시 공시지가의 20%에 해당하는 이행강제금이 부과됩니다. 농지신탁이나 임대 등으로 합법적 보유가 가능합니다.',
   },
   {
     id: 3,
     title: '농지 임대차 관련 규정',
-    content: '농지법에 따라 농지 임대차는 서면 계약이 원칙이며, 임대 기간은 최소 3년 이상입니다. 귀농·귀촌인이 임차하는 경우 별도 요건이 완화됩니다.',
+    content:
+      '농지법에 따라 농지 임대차는 서면 계약이 원칙이며, 임대 기간은 최소 3년 이상입니다. 귀농·귀촌인이 임차하는 경우 별도 요건이 완화됩니다.',
   },
   {
     id: 4,
     title: '농지신탁이란?',
-    content: '농지신탁은 농지 소유자가 신탁회사에 농지를 맡기고 신탁회사가 농지를 경작·관리하는 제도입니다. 자경 의무를 이행하지 못하는 경우에도 합법적으로 농지를 보유할 수 있습니다.',
+    content:
+      '농지신탁은 농지 소유자가 신탁회사에 농지를 맡기고 신탁회사가 농지를 경작·관리하는 제도입니다. 자경 의무를 이행하지 못하는 경우에도 합법적으로 농지를 보유할 수 있습니다.',
+  },
+];
+
+export const returnFarmingInfo = [
+  {
+    icon: '🌾',
+    title: '귀농귀촌종합센터',
+    desc: '귀농·귀촌 교육, 컨설팅, 지원사업 안내',
+    badge: '공식',
+    badgeColor: 'bg-green-100 text-green-700',
+  },
+  {
+    icon: '💰',
+    title: '귀농인 주택구입 대출',
+    desc: '최대 7,500만원 저금리 대출 지원',
+    badge: '금융',
+    badgeColor: 'bg-blue-100 text-blue-700',
+  },
+  {
+    icon: '📚',
+    title: '귀농귀촌 교육 과정',
+    desc: '농업 기초부터 전문 기술까지 무료 교육',
+    badge: '교육',
+    badgeColor: 'bg-purple-100 text-purple-700',
+  },
+  {
+    icon: '🏠',
+    title: '농촌 빈집 활용 지원',
+    desc: '빈집 정보 제공 및 리모델링 지원',
+    badge: '주거',
+    badgeColor: 'bg-yellow-100 text-yellow-700',
+  },
+  {
+    icon: '🌱',
+    title: '스마트팜 청년 창업',
+    desc: '스마트팜 기술 교육 및 창업 지원',
+    badge: '창업',
+    badgeColor: 'bg-teal-100 text-teal-700',
   },
 ];
