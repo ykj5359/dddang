@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - claude/agri-land-matching-mvp-Hcz0a
       - claude/restart-with-dddang-JkzsE
 
 permissions:
