@@ -1,0 +1,16 @@
+# Disabled - Vite build handled by deploy.yml
+name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+
+on:
+  workflow_dispatch:
+    inputs:
+      disabled:
+        description: 'This workflow is disabled'
+        default: 'true'
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "disabled"
