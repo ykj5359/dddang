@@ -35,6 +35,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_KAKAO_MAP_KEY: d979f3b1bc33fabb3cfab46e6174d90f
+          VITE_LAND_TRADE_KEY: Phkre9DoicHd0pTNbufNEYjyQt3+TkBFcY/j3wpHq4A5Jfp/xx2aXIeKeCF+xoVGUeLjlQVX8rrpcFKsKikldw==
+          VITE_VWORLD_KEY: A52CE9F8-406D-3143-8FB0-3499495BC3A3
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
