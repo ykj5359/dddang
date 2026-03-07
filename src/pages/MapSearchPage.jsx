@@ -1,209 +1,321 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { listings } from '../data/dummyData';
+import { formatPrice, LAND_TYPE_COLORS } from '../utils/format';
+import { geocodeAddress } from '../services/landApi';
 
-const defaultCenter = { lat: 36.5, lng: 127.5 };
+const DEAL_TYPES = ['전체', '매매', '임대'];
+const LAND_TYPES = ['전체', '전', '답', '임야', '대지'];
 
-function formatPrice(price) {
-  if (!price) return '협의';
-  if (price >= 100000000) {
-    const eok = Math.floor(price / 100000000);
-    return `${eok}억원`;
-  }
-  return `${Math.floor(price / 10000).toLocaleString()}만원`;
+const TYPE_COLORS = {
+  전: { bg: '#d97706', text: '#fff' },
+  답: { bg: '#2563eb', text: '#fff' },
+  임야: { bg: '#16a34a', text: '#fff' },
+  대지: { bg: '#6b7280', text: '#fff' },
+};
+
+function createOverlayHTML(listing, selected) {
+  const price =
+    listing.dealType === '매매'
+      ? formatPrice(listing.price)
+      : `월 ${formatPrice(listing.rentPrice)}`;
+  const { bg } = TYPE_COLORS[listing.type] || { bg: '#6b7280' };
+  const border = selected ? `3px solid ${bg}` : `2px solid ${bg}`;
+  const shadow = selected ? '0 4px 12px rgba(0,0,0,0.3)' : '0 2px 6px rgba(0,0,0,0.18)';
+  const transform = selected ? 'scale(1.15)' : 'scale(1)';
+
+  return `<div
+    onclick="window.__dddang_markerClick(${listing.id})"
+    style="display:inline-flex;align-items:center;gap:4px;background:white;border:${border};border-radius:8px;padding:4px 8px;cursor:pointer;white-space:nowrap;box-shadow:${shadow};transform:${transform};font-family:-apple-system,sans-serif;"
+  >
+    <span style="background:${bg};color:#fff;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;">${listing.type}</span>
+    <span style="font-size:11px;font-weight:700;color:#1a1a1a;">${price}</span>
+  </div>`;
 }
 
 export default function MapSearchPage({ onNavigate }) {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const mapContainerRef = useRef(null);
+  const kakaoMapRef = useRef(null);
+  const overlaysRef = useRef([]);
+  const clickHandlerRef = useRef(null);
+
   const [selectedListing, setSelectedListing] = useState(null);
   const [searchInput, setSearchInput] = useState('');
-  const [showLegend, setShowLegend] = useState(true);
+  const [dealFilter, setDealFilter] = useState('전체');
+  const [landFilter, setLandFilter] = useState('전체');
+  const [showPanel, setShowPanel] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [mapReady, setMapReady] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !mapRef.current) return;
+  // 항상 최신 상태 참조
+  const setSelectedListingRef = useRef(null);
+  setSelectedListingRef.current = (listing) => {
+    setSelectedListing(listing);
+    setShowDetail(true);
+    setShowPanel(false);
+  };
 
-    const kakao = window.kakao;
-    if (!kakao || !kakao.maps) {
-      setMapLoaded(false);
-      return;
-    }
-
-    kakao.maps.load(() => {
-      const options = {
-        center: new kakao.maps.LatLng(defaultCenter.lat, defaultCenter.lng),
-        level: 7,
-      };
-
-      const map = new kakao.maps.Map(mapRef.current, options);
-      mapInstanceRef.current = map;
-      setMapLoaded(true);
-
-      // 매물 마커 추가
-      listings.forEach((listing) => {
-        if (!listing.lat || !listing.lng) return;
-
-        const markerPosition = new kakao.maps.LatLng(listing.lat, listing.lng);
-        const marker = new kakao.maps.Marker({ position: markerPosition, map });
-
-        const infowindow = new kakao.maps.InfoWindow({
-          content: `<div style="padding:8px;font-size:12px;max-width:160px">
-            <strong>${listing.address.split(' ').slice(-2).join(' ')}</strong><br/>
-            ${listing.type} · ${listing.dealType}<br/>
-            <span style="color:#16a34a;font-weight:bold">${formatPrice(listing.price || listing.rentPrice)}</span>
-          </div>`,
-        });
-
-        kakao.maps.event.addListener(marker, 'click', () => {
-          infowindow.open(map, marker);
-          setSelectedListing(listing);
-        });
-
-        kakao.maps.event.addListener(map, 'click', () => {
-          infowindow.close();
-        });
-      });
-    });
+  clickHandlerRef.current = useCallback((id) => {
+    const listing = listings.find((l) => l.id === id);
+    if (listing) setSelectedListingRef.current(listing);
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (!searchInput.trim() || !mapInstanceRef.current) return;
+  // ── 카카오 지도 초기화 ──
+  useEffect(() => {
+    window.__dddang_markerClick = (id) => clickHandlerRef.current(id);
 
-    const kakao = window.kakao;
-    if (!kakao?.maps?.services) return;
+    const initMap = () => {
+      if (!window.kakao?.maps || !mapContainerRef.current) return;
+      const map = new window.kakao.maps.Map(mapContainerRef.current, {
+        center: new window.kakao.maps.LatLng(36.5, 127.5),
+        level: 10,
+      });
+      kakaoMapRef.current = map;
+      setMapReady(true);
+    };
 
-    const geocoder = new kakao.maps.services.Geocoder();
-    geocoder.addressSearch(searchInput, (result, status) => {
-      if (status === kakao.maps.services.Status.OK) {
-        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-        mapInstanceRef.current.setCenter(coords);
-        mapInstanceRef.current.setLevel(5);
-      }
-    });
+    if (window.kakao?.maps) {
+      initMap();
+    } else {
+      const t = setTimeout(initMap, 600);
+      return () => clearTimeout(t);
+    }
+
+    return () => { delete window.__dddang_markerClick; };
+  }, []);
+
+  // ── 필터 변경 시 오버레이 재생성 ──
+  useEffect(() => {
+    if (!mapReady || !kakaoMapRef.current) return;
+
+    overlaysRef.current.forEach((ov) => ov.setMap(null));
+    overlaysRef.current = [];
+
+    listings
+      .filter((l) => {
+        if (!l.lat || !l.lng) return false;
+        if (dealFilter !== '전체' && l.dealType !== dealFilter) return false;
+        if (landFilter !== '전체' && l.type !== landFilter) return false;
+        return true;
+      })
+      .forEach((listing) => {
+        const isSelected = selectedListing?.id === listing.id;
+        const overlay = new window.kakao.maps.CustomOverlay({
+          position: new window.kakao.maps.LatLng(listing.lat, listing.lng),
+          content: createOverlayHTML(listing, isSelected),
+          yAnchor: 1.4,
+          zIndex: isSelected ? 10 : 1,
+        });
+        overlay.setMap(kakaoMapRef.current);
+        overlaysRef.current.push(overlay);
+      });
+  }, [mapReady, dealFilter, landFilter, selectedListing]);
+
+  const filteredListings = listings.filter((l) => {
+    if (dealFilter !== '전체' && l.dealType !== dealFilter) return false;
+    if (landFilter !== '전체' && l.type !== landFilter) return false;
+    return true;
+  });
+
+  // ── 주소 검색 ──
+  const handleSearch = async () => {
+    if (!searchInput.trim()) return;
+    setSearchError('');
+    try {
+      const { lat, lng } = await geocodeAddress(searchInput.trim());
+      kakaoMapRef.current?.setCenter(new window.kakao.maps.LatLng(lat, lng));
+      kakaoMapRef.current?.setLevel(7);
+    } catch {
+      setSearchError('주소를 찾을 수 없습니다');
+    }
+  };
+
+  const handleListingClick = (listing) => {
+    setSelectedListing(listing);
+    setShowDetail(true);
+    setShowPanel(false);
+    if (listing.lat && listing.lng && kakaoMapRef.current) {
+      kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(listing.lat, listing.lng));
+      kakaoMapRef.current.setLevel(7);
+    }
   };
 
   return (
-    <div className="relative h-full">
-      {/* Search overlay */}
-      <div className="absolute top-4 left-4 right-4 z-10">
-        <form onSubmit={handleSearch} className="flex gap-2">
+    <div className="relative w-full h-full overflow-hidden bg-gray-200">
+
+      {/* 카카오 지도 */}
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* 상단 검색 + 필터 */}
+      <div className="absolute top-3 left-3 right-3 z-20">
+        <div className="bg-white rounded-2xl shadow-lg flex items-center px-3 py-2.5 gap-2">
+          <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+          </svg>
           <input
             type="text"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="주소 검색..."
-            className="flex-1 px-4 py-2.5 rounded-xl shadow-md text-sm outline-none focus:ring-2 focus:ring-primary-400"
+            onChange={(e) => { setSearchInput(e.target.value); setSearchError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="지역, 주소 검색 (예: 경기도 여주시)"
+            className="flex-1 text-sm outline-none text-gray-800 placeholder-gray-400 bg-transparent"
           />
           <button
-            type="submit"
-            className="bg-primary-600 text-white px-4 py-2.5 rounded-xl shadow-md font-medium text-sm hover:bg-primary-700 transition-colors"
+            onClick={handleSearch}
+            className="bg-primary-600 text-white text-xs px-3 py-1.5 rounded-xl font-semibold flex-shrink-0 hover:bg-primary-700 transition-colors"
           >
             검색
           </button>
-        </form>
+        </div>
+
+        {searchError && (
+          <p className="mt-1 text-xs text-red-600 bg-white/90 rounded-lg px-3 py-1.5 shadow">
+            {searchError}
+          </p>
+        )}
+
+        <div className="flex gap-1.5 mt-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {DEAL_TYPES.map((t) => (
+            <button key={t} onClick={() => setDealFilter(t)}
+              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-semibold border transition-all shadow-sm ${
+                dealFilter === t ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >{t}</button>
+          ))}
+          <div className="w-px bg-gray-300 mx-0.5 self-stretch flex-shrink-0" />
+          {LAND_TYPES.map((t) => (
+            <button key={t} onClick={() => setLandFilter(t)}
+              className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full font-semibold border transition-all shadow-sm ${
+                landFilter === t ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >{t}</button>
+          ))}
+        </div>
       </div>
 
-      {/* Map */}
-      <div ref={mapRef} className="w-full h-full bg-gray-200" />
+      {/* 매물 목록 토글 버튼 */}
+      <button
+        onClick={() => { setShowPanel(!showPanel); if (showDetail) setShowDetail(false); }}
+        className="absolute z-20 bg-white rounded-xl shadow-md flex items-center gap-1.5 px-3 py-2 hover:bg-gray-50 transition-colors"
+        style={{ top: '130px', left: '12px' }}
+      >
+        <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h16" />
+        </svg>
+        <span className="text-xs font-bold text-primary-600">{filteredListings.length}건</span>
+      </button>
 
-      {/* No Kakao API fallback */}
-      {!mapLoaded && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
-          <div className="text-center px-6">
-            <span className="text-5xl mb-4 block">🗺️</span>
-            <p className="font-bold text-gray-700 mb-2">카카오맵을 불러오는 중...</p>
-            <p className="text-sm text-gray-500 mb-6">API 키를 설정하면 실제 지도가 표시됩니다</p>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 text-left max-w-sm">
-              <p className="text-xs font-bold text-gray-700 mb-3">등록된 매물 ({listings.length}건)</p>
-              {listings.map((listing) => (
-                <button
-                  key={listing.id}
-                  onClick={() => setSelectedListing(listing)}
-                  className="w-full text-left py-2.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-1 rounded"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">{listing.address.split(' ').slice(-3).join(' ')}</p>
-                      <p className="text-xs text-gray-500">{listing.type} · {listing.area.toLocaleString()}㎡</p>
-                    </div>
-                    <span className={`text-xs font-bold ${listing.dealType === '매매' ? 'text-blue-600' : 'text-purple-600'}`}>
-                      {formatPrice(listing.price || listing.rentPrice)}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 지도 컨트롤 */}
+      <div className="absolute z-20 flex flex-col gap-2" style={{ bottom: '120px', right: '12px' }}>
+        <button onClick={() => kakaoMapRef.current?.setLevel(kakaoMapRef.current.getLevel() - 1)}
+          className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-gray-600 font-bold text-xl hover:bg-gray-50 leading-none">+</button>
+        <button onClick={() => kakaoMapRef.current?.setLevel(kakaoMapRef.current.getLevel() + 1)}
+          className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-gray-600 font-bold text-xl hover:bg-gray-50 leading-none">−</button>
+        <button
+          onClick={() => navigator.geolocation?.getCurrentPosition(
+            ({ coords }) => {
+              kakaoMapRef.current?.setCenter(new window.kakao.maps.LatLng(coords.latitude, coords.longitude));
+              kakaoMapRef.current?.setLevel(6);
+            }
+          )}
+          className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-primary-600 hover:bg-gray-50"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
 
-      {/* Legend */}
-      {showLegend && (
-        <div className="absolute top-20 right-4 z-10 bg-white rounded-xl shadow-md p-3 text-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-gray-700">범례</span>
-            <button onClick={() => setShowLegend(false)} className="text-gray-400 ml-3">✕</button>
+      {/* 매물 목록 패널 */}
+      <div className={`absolute left-0 right-0 bottom-0 z-30 transition-transform duration-300 ${showPanel ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ maxHeight: '60vh' }}>
+          <div className="flex justify-center pt-2.5 pb-1">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400 opacity-50 border border-red-500" />
-              <span className="text-gray-600">300m 이내 축사 (위험)</span>
+              <span className="font-bold text-gray-800 text-sm">매물 목록</span>
+              <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-semibold">{filteredListings.length}건</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-400 opacity-50 border border-orange-500" />
-              <span className="text-gray-600">500m 이내 축사 (주의)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-400 opacity-50 border border-yellow-500" />
-              <span className="text-gray-600">1km 이내 축사 (참고)</span>
-            </div>
+            <button onClick={() => setShowPanel(false)} className="text-gray-400 hover:text-gray-600 p-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Selected listing popup */}
-      {selectedListing && (
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="flex gap-2 mb-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    selectedListing.type === '전' ? 'bg-yellow-100 text-yellow-800' :
-                    selectedListing.type === '답' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {selectedListing.type}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    selectedListing.dealType === '매매' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                  }`}>
-                    {selectedListing.dealType}
-                  </span>
-                </div>
-                <p className="text-sm font-semibold text-gray-900">{selectedListing.address}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{selectedListing.area.toLocaleString()}㎡</p>
+          <div className="overflow-y-auto flex-1">
+            {filteredListings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                <span className="text-3xl mb-2">🔍</span>
+                <p className="text-sm">조건에 맞는 매물이 없습니다</p>
               </div>
-              <button
-                onClick={() => setSelectedListing(null)}
-                className="text-gray-400 hover:text-gray-600 p-1"
+            ) : filteredListings.map((listing) => (
+              <button key={listing.id} onClick={() => handleListingClick(listing)}
+                className={`w-full text-left px-4 py-3.5 border-b border-gray-50 hover:bg-primary-50 transition-colors ${
+                  selectedListing?.id === listing.id ? 'bg-primary-50 border-l-2 border-l-primary-600' : ''
+                }`}
               >
-                ✕
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex gap-1.5 mb-1.5">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${LAND_TYPE_COLORS[listing.type] || 'bg-gray-100 text-gray-700'}`}>{listing.type}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${listing.dealType === '매매' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{listing.dealType}</span>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-800 truncate mb-0.5">{listing.address}</p>
+                    <p className="text-xs text-gray-500">{listing.area.toLocaleString()}㎡ · 약 {Math.round(listing.area / 3.3)}평</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold text-primary-700">
+                      {listing.dealType === '매매' ? formatPrice(listing.price) : `월 ${formatPrice(listing.rentPrice)}`}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">{listing.createdAt}</p>
+                  </div>
+                </div>
               </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 매물 상세 바텀시트 */}
+      {showDetail && selectedListing && (
+        <div className="absolute bottom-0 left-0 right-0 z-30">
+          <div className="bg-white rounded-t-2xl shadow-2xl border-t border-gray-100">
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-primary-700">
-                {selectedListing.dealType === '매매'
-                  ? formatPrice(selectedListing.price)
-                  : `월 ${formatPrice(selectedListing.rentPrice)}`}
-              </p>
-              <button
-                onClick={() => onNavigate('detail', selectedListing)}
-                className="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
-              >
-                상세보기 →
-              </button>
+            <div className="px-4 pb-5">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex gap-1.5">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${LAND_TYPE_COLORS[selectedListing.type] || 'bg-gray-100 text-gray-700'}`}>{selectedListing.type}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${selectedListing.dealType === '매매' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{selectedListing.dealType}</span>
+                </div>
+                <button onClick={() => { setShowDetail(false); setSelectedListing(null); }} className="text-gray-400 hover:text-gray-600 p-0.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm font-bold text-gray-900 mb-0.5">{selectedListing.address}</p>
+              <p className="text-xs text-gray-500 mb-3">{selectedListing.area.toLocaleString()}㎡ · 약 {Math.round(selectedListing.area / 3.3)}평</p>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">{selectedListing.dealType === '매매' ? '매매가' : '월 임대료'}</p>
+                  <p className="text-2xl font-bold text-primary-700">
+                    {selectedListing.dealType === '매매' ? formatPrice(selectedListing.price) : `월 ${formatPrice(selectedListing.rentPrice)}`}
+                  </p>
+                  {selectedListing.description && (
+                    <p className="text-xs text-gray-500 mt-1 truncate max-w-52">{selectedListing.description}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => { onNavigate('detail', selectedListing); setShowDetail(false); }}
+                  className="bg-primary-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-primary-700 transition-colors flex-shrink-0"
+                >
+                  상세보기 →
+                </button>
+              </div>
             </div>
           </div>
         </div>

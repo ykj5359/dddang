@@ -1,26 +1,22 @@
 import { useState } from 'react';
 import { recentLands, listings, newsItems } from '../data/dummyData';
+import { formatPrice, formatArea, LAND_TYPE_COLORS } from '../utils/format';
 
-function formatPrice(price) {
-  if (price >= 100000000) {
-    const eok = Math.floor(price / 100000000);
-    const man = Math.floor((price % 100000000) / 10000);
-    return man > 0 ? `${eok}억 ${man.toLocaleString()}만원` : `${eok}억원`;
-  }
-  return `${Math.floor(price / 10000).toLocaleString()}만원`;
-}
-
-function formatArea(sqm) {
-  const pyeong = Math.round(sqm / 3.3058);
-  return `${sqm.toLocaleString()}㎡ (약 ${pyeong}평)`;
-}
-
-const typeColors = {
-  '전': 'bg-yellow-100 text-yellow-800',
-  '답': 'bg-blue-100 text-blue-800',
-  '대': 'bg-gray-100 text-gray-800',
-  '임야': 'bg-green-100 text-green-800',
+const NEWS_CATEGORY_COLORS = {
+  농지법: 'bg-red-100 text-red-700',
+  귀농지원: 'bg-green-100 text-green-700',
+  시장동향: 'bg-blue-100 text-blue-700',
+  농지신탁: 'bg-orange-100 text-orange-700',
 };
+
+const QUICK_ACTIONS = [
+  { icon: '🗺️', label: '지도 검색', tab: 'map' },
+  { icon: '💰', label: '실거래가', tab: 'detail' },
+  { icon: '🌾', label: '귀농 매칭', tab: 'matching' },
+  { icon: '🏛️', label: '농지신탁', tab: 'consult' },
+];
+
+const QUICK_TAGS = ['경기 여주', '충남 홍성', '전북 완주', '강원 평창'];
 
 export default function HomePage({ onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,19 +24,17 @@ export default function HomePage({ onNavigate }) {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      onNavigate('detail', { address: searchQuery });
-    }
+    if (searchQuery.trim()) onNavigate('detail', { address: searchQuery });
   };
+
+  const currentNews = newsItems[newsIndex];
 
   return (
     <div className="pb-4">
-      {/* Hero Search */}
+      {/* 히어로 검색 */}
       <div className="bg-gradient-to-br from-primary-600 to-primary-800 px-4 pt-6 pb-8">
-        <p className="text-primary-100 text-sm mb-1">농지 정보 & 귀농 매칭 플랫폼</p>
-        <h2 className="text-white text-xl font-bold mb-4">
-          내 농지의 가치를 확인하세요
-        </h2>
+        <p className="text-primary-100 text-sm mb-1">농지 정보 &amp; 귀농 매칭 플랫폼</p>
+        <h2 className="text-white text-xl font-bold mb-4">내 농지의 가치를 확인하세요</h2>
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
             type="text"
@@ -57,7 +51,7 @@ export default function HomePage({ onNavigate }) {
           </button>
         </form>
         <div className="flex gap-2 mt-3 flex-wrap">
-          {['경기 여주', '충남 홍성', '전북 완주', '강원 평창'].map((tag) => (
+          {QUICK_TAGS.map((tag) => (
             <button
               key={tag}
               onClick={() => setSearchQuery(tag)}
@@ -69,16 +63,11 @@ export default function HomePage({ onNavigate }) {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* 빠른 메뉴 */}
       <div className="px-4 -mt-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
           <div className="grid grid-cols-4 gap-2">
-            {[
-              { icon: '🗺️', label: '지도 검색', tab: 'map' },
-              { icon: '💰', label: '실거래가', tab: 'detail' },
-              { icon: '🌾', label: '귀농 매칭', tab: 'matching' },
-              { icon: '📋', label: '농지신탁', tab: 'consult' },
-            ].map((action) => (
+            {QUICK_ACTIONS.map((action) => (
               <button
                 key={action.label}
                 onClick={() => onNavigate(action.tab)}
@@ -92,7 +81,7 @@ export default function HomePage({ onNavigate }) {
         </div>
       </div>
 
-      {/* News Banner */}
+      {/* 농지 뉴스 */}
       <div className="px-4 mt-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-900">농지 뉴스</h3>
@@ -107,18 +96,11 @@ export default function HomePage({ onNavigate }) {
           </div>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            newsItems[newsIndex].category === '농지법' ? 'bg-red-100 text-red-700' :
-            newsItems[newsIndex].category === '귀농지원' ? 'bg-green-100 text-green-700' :
-            newsItems[newsIndex].category === '시장동향' ? 'bg-blue-100 text-blue-700' :
-            'bg-orange-100 text-orange-700'
-          }`}>
-            {newsItems[newsIndex].category}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${NEWS_CATEGORY_COLORS[currentNews.category] || 'bg-gray-100 text-gray-700'}`}>
+            {currentNews.category}
           </span>
-          <p className="mt-2 font-medium text-gray-900 text-sm leading-relaxed">
-            {newsItems[newsIndex].title}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">{newsItems[newsIndex].date}</p>
+          <p className="mt-2 font-medium text-gray-900 text-sm leading-relaxed">{currentNews.title}</p>
+          <p className="text-xs text-gray-400 mt-1">{currentNews.date}</p>
         </div>
         <div className="flex gap-1 mt-2">
           <button
@@ -136,7 +118,7 @@ export default function HomePage({ onNavigate }) {
         </div>
       </div>
 
-      {/* Recent Searches */}
+      {/* 최근 조회한 토지 */}
       <div className="px-4 mt-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-900">최근 조회한 토지</h3>
@@ -152,7 +134,7 @@ export default function HomePage({ onNavigate }) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[land.type] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LAND_TYPE_COLORS[land.type] || 'bg-gray-100 text-gray-700'}`}>
                       {land.type}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -176,7 +158,7 @@ export default function HomePage({ onNavigate }) {
         </div>
       </div>
 
-      {/* New Listings */}
+      {/* 신규 매물 */}
       <div className="px-4 mt-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-900">신규 매물</h3>
@@ -194,7 +176,7 @@ export default function HomePage({ onNavigate }) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[listing.type] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LAND_TYPE_COLORS[listing.type] || 'bg-gray-100 text-gray-700'}`}>
                       {listing.type}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -207,11 +189,9 @@ export default function HomePage({ onNavigate }) {
                   <p className="text-xs text-gray-500 mt-1">{formatArea(listing.area)}</p>
                 </div>
                 <div className="text-right ml-3">
-                  {listing.dealType === '매매' ? (
-                    <p className="text-sm font-bold text-primary-700">{formatPrice(listing.price)}</p>
-                  ) : (
-                    <p className="text-sm font-bold text-purple-700">월 {formatPrice(listing.rentPrice)}</p>
-                  )}
+                  <p className={`text-sm font-bold ${listing.dealType === '매매' ? 'text-primary-700' : 'text-purple-700'}`}>
+                    {listing.dealType === '매매' ? formatPrice(listing.price) : `월 ${formatPrice(listing.rentPrice)}`}
+                  </p>
                   <p className="text-xs text-gray-400">{listing.createdAt}</p>
                 </div>
               </div>
@@ -221,7 +201,7 @@ export default function HomePage({ onNavigate }) {
         </div>
       </div>
 
-      {/* CTA Banner */}
+      {/* CTA 배너 */}
       <div className="px-4 mt-5">
         <div className="bg-earth-50 border border-earth-200 rounded-xl p-4">
           <div className="flex items-center gap-3">
