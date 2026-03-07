@@ -48,7 +48,7 @@ const tabs = [
 
 export default function BottomNav({ currentTab, onTabChange }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-primary-600 border-t border-primary-700 max-w-md mx-auto">
       <div className="flex">
         {tabs.map((tab) => {
           const active = currentTab === tab.id;
@@ -57,11 +57,11 @@ export default function BottomNav({ currentTab, onTabChange }) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`flex-1 flex flex-col items-center py-2 gap-1 transition-colors ${
-                active ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
+                active ? 'text-white' : 'text-primary-200 hover:text-white'
               }`}
             >
               {tab.icon(active)}
-              <span className={`text-xs font-medium ${active ? 'text-primary-600' : 'text-gray-400'}`}>
+              <span className={`text-xs font-medium ${active ? 'text-white' : 'text-primary-200'}`}>
                 {tab.label}
               </span>
             </button>
