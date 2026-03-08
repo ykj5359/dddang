@@ -8,19 +8,19 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          50:  '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
         },
         earth: {
-          50: '#fdf8f0',
+          50:  '#fdf8f0',
           100: '#faebd7',
           200: '#f5d5a8',
           300: '#edb96f',
@@ -30,10 +30,20 @@ export default {
           700: '#7c4d18',
           800: '#643e18',
           900: '#533318',
+        },
+        dark: {
+          800: '#1e293b',
+          900: '#0f172a',
         }
-      }
+      },
+      fontFamily: {
+        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      },
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+      },
     },
   },
   plugins: [],
 }
-

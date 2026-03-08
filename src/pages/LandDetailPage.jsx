@@ -4,20 +4,29 @@ import { formatPrice, formatArea } from '../utils/format';
 
 const LIVESTOCK_ICONS = { 돈사: '🐷', 계사: '🐔', 우사: '🐄' };
 
-function RiskBar({ score }) {
+function RiskMeter({ score }) {
   const level =
-    score >= 60 ? { color: 'bg-red-500', text: 'text-red-600', label: '높음' } :
-    score >= 30 ? { color: 'bg-orange-400', text: 'text-orange-600', label: '보통' } :
-                  { color: 'bg-green-500', text: 'text-green-600', label: '낮음' };
+    score >= 60 ? { color: '#ef4444', bg: 'bg-red-100', text: 'text-red-700', label: '높음', desc: '자경 의무 위반 위험이 높습니다' } :
+    score >= 30 ? { color: '#f59e0b', bg: 'bg-amber-100', text: 'text-amber-700', label: '보통', desc: '주의가 필요합니다' } :
+                  { color: '#10b981', bg: 'bg-emerald-100', text: 'text-emerald-700', label: '낮음', desc: '양호한 상태입니다' };
   return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-sm text-gray-600">자경 의무 위반 위험도</span>
-        <span className={`text-sm font-bold ${level.text}`}>{score}점 ({level.label})</span>
+    <div className={`${level.bg} rounded-2xl p-4`}>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">리스크 스코어</p>
+          <p className={`text-3xl font-black mt-0.5 ${level.text}`}>{score}<span className="text-base font-semibold">점</span></p>
+        </div>
+        <div className={`px-4 py-1.5 rounded-full ${level.bg} border-2`} style={{ borderColor: level.color }}>
+          <span className={`text-sm font-bold ${level.text}`}>{level.label}</span>
+        </div>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2.5">
-        <div className={`h-2.5 rounded-full transition-all ${level.color}`} style={{ width: `${score}%` }} />
+      <div className="w-full bg-white/60 rounded-full h-2.5">
+        <div
+          className="h-2.5 rounded-full transition-all"
+          style={{ width: `${score}%`, backgroundColor: level.color }}
+        />
       </div>
+      <p className={`text-xs mt-2 font-medium ${level.text}`}>{level.desc}</p>
     </div>
   );
 }
@@ -25,30 +34,31 @@ function RiskBar({ score }) {
 function PriceChart({ data }) {
   const maxPrice = Math.max(...data.map((d) => d.avgPrice));
   return (
-    <div className="mt-3">
-      <div className="flex items-end gap-2 h-24">
+    <div className="mt-4">
+      <div className="flex items-end gap-2 h-28">
         {data.map((item, i) => {
           const isLatest = i === data.length - 1;
+          const heightPct = (item.avgPrice / maxPrice) * 100;
           return (
             <div key={item.year} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-xs text-gray-500 font-medium">{item.avgPrice.toLocaleString()}</span>
+              <span className="text-xs text-slate-500 font-semibold">{item.avgPrice.toLocaleString()}</span>
               <div
-                className={`w-full rounded-t-md transition-all ${isLatest ? 'bg-primary-500' : 'bg-primary-200'}`}
-                style={{ height: `${(item.avgPrice / maxPrice) * 100}%` }}
+                className={`w-full rounded-t-lg transition-all ${isLatest ? 'bg-primary-500' : 'bg-primary-200'}`}
+                style={{ height: `${heightPct}%`, minHeight: 4 }}
               />
-              <span className="text-xs text-gray-500">{item.year}</span>
+              <span className="text-xs text-slate-400">{item.year}</span>
             </div>
           );
         })}
       </div>
-      <p className="text-xs text-gray-400 mt-2 text-center">단위: 원/㎡ | 기준: 해당 읍면동 평균 실거래가</p>
+      <p className="text-xs text-slate-400 mt-3 text-center">단위: 원/㎡ | 인근 읍면동 평균 실거래가</p>
     </div>
   );
 }
 
 const TABS = [
-  { id: 'info', label: '기본정보' },
-  { id: 'price', label: '가격정보' },
+  { id: 'info',     label: '기본정보' },
+  { id: 'price',    label: '가격정보' },
   { id: 'analysis', label: '분석' },
 ];
 
@@ -59,9 +69,9 @@ const RECENT_DEALS = [
 ];
 
 const ENV_ITEMS = [
-  { label: '공장', count: 0, ok: true },
-  { label: '묘지', count: 1, ok: false },
-  { label: '송전탑', count: 0, ok: true },
+  { label: '공장',    count: 0, ok: true },
+  { label: '묘지',    count: 1, ok: false },
+  { label: '송전탑',  count: 0, ok: true },
   { label: '군사시설', count: 0, ok: true },
   { label: '도로 접면', count: 1, ok: true },
   { label: '수원 접근', count: 1, ok: true },
@@ -73,14 +83,13 @@ export default function LandDetailPage({ land, onNavigate }) {
 
   if (!selectedLand) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-6 py-20">
-        <span className="text-5xl mb-4 block">🔍</span>
-        <p className="font-bold text-gray-700 mb-2">조회할 토지를 선택하세요</p>
-        <p className="text-sm text-gray-500 mb-6">홈 또는 지도에서 토지를 선택하거나 검색하세요</p>
-        <button
-          onClick={() => onNavigate('home')}
-          className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
-        >
+      <div className="flex flex-col items-center justify-center min-h-96 text-center px-6 py-20">
+        <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-5">
+          <span className="text-4xl">🔍</span>
+        </div>
+        <p className="font-bold text-slate-700 mb-2 text-lg">조회할 토지를 선택하세요</p>
+        <p className="text-sm text-slate-400 mb-6">홈 또는 지도에서 토지를 선택하거나 검색하세요</p>
+        <button onClick={() => onNavigate('home')} className="btn-primary">
           홈으로 돌아가기
         </button>
       </div>
@@ -90,27 +99,29 @@ export default function LandDetailPage({ land, onNavigate }) {
   const ratio = ((selectedLand.dealPrice / selectedLand.officialPrice) * 100).toFixed(0);
 
   return (
-    <div className="pb-4">
-      {/* 주소 헤더 */}
-      <div className="bg-primary-700 px-4 py-5">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs bg-primary-500 text-white px-2 py-0.5 rounded-full">{selectedLand.type}</span>
-          <span className="text-xs text-primary-200">농지</span>
+    <div>
+      {/* ── Address hero ── */}
+      <div
+        className="px-4 py-6 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #115e59 100%)' }}
+      >
+        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
+        <div className="flex items-center gap-2 mb-2">
+          <span className="badge bg-primary-500/30 text-primary-200 border border-primary-400/30">{selectedLand.type}</span>
+          <span className="text-xs text-primary-300">농지</span>
         </div>
         <h2 className="text-white font-bold text-base leading-snug">{selectedLand.address}</h2>
-        <p className="text-primary-200 text-sm mt-1">{formatArea(selectedLand.area)}</p>
+        <p className="text-primary-300 text-sm mt-1">{formatArea(selectedLand.area)}</p>
       </div>
 
-      {/* 탭 */}
-      <div className="bg-white sticky top-14 z-30 border-b border-gray-200">
-        <div className="flex">
+      {/* ── Tabs ── */}
+      <div className="bg-white sticky top-[60px] z-30 border-b border-slate-200 px-4 py-2.5">
+        <div className="tab-bar">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === tab.id ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={activeTab === tab.id ? 'tab-item-active' : 'tab-item'}
             >
               {tab.label}
             </button>
@@ -118,45 +129,44 @@ export default function LandDetailPage({ land, onNavigate }) {
         </div>
       </div>
 
-      <div className="px-4 mt-4">
-        {/* 기본정보 탭 */}
+      <div className="px-4 py-4 space-y-4">
+
+        {/* ── 기본정보 ── */}
         {activeTab === 'info' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <span className="text-sm font-bold text-gray-700">토지 기본 정보</span>
-              </div>
-              <div className="divide-y divide-gray-50">
+          <>
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-3">토지 기본 정보</p>
+              <div className="divide-y divide-slate-50">
                 {[
-                  { label: '소재지', value: selectedLand.address },
-                  { label: '지목', value: `${selectedLand.type} (농지)` },
-                  { label: '면적', value: formatArea(selectedLand.area) },
-                  { label: '용도지역', value: '농림지역' },
+                  { label: '소재지',      value: selectedLand.address },
+                  { label: '지목',        value: `${selectedLand.type} (농지)` },
+                  { label: '면적',        value: formatArea(selectedLand.area) },
+                  { label: '용도지역',    value: '농림지역' },
                   { label: '개발제한구역', value: '해당 없음' },
                   { label: '농업진흥구역', value: '농업진흥지역 내' },
                 ].map((row) => (
-                  <div key={row.label} className="flex px-4 py-3 gap-4">
-                    <span className="text-sm text-gray-500 w-24 shrink-0">{row.label}</span>
-                    <span className="text-sm font-medium text-gray-900">{row.value}</span>
+                  <div key={row.label} className="flex py-3 gap-4">
+                    <span className="text-xs text-slate-400 font-semibold w-24 shrink-0 uppercase tracking-wide pt-0.5">{row.label}</span>
+                    <span className="text-sm font-semibold text-slate-800">{row.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                <span className="text-sm font-bold text-gray-700">농지 판별 결과</span>
-              </div>
-              <div className="px-4 py-4 space-y-3">
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-3">농지 판별 결과</p>
+              <div className="space-y-2.5">
                 {[
-                  { label: '농지 여부', value: '✅ 농지 (「농지법」상 농지)', color: 'text-green-600' },
-                  { label: '자경 의무', value: '⚠️ 자경 또는 임대 필요', color: 'text-orange-600' },
-                  { label: '농취증 필요', value: '✅ 취득 시 필요', color: 'text-blue-600' },
-                  { label: '신탁 가능', value: '✅ 농지신탁 가능', color: 'text-green-600' },
+                  { label: '농지 여부',  value: '농지 (농지법상 농지)',     icon: '✅', ok: true },
+                  { label: '자경 의무',  value: '자경 또는 임대 필요',      icon: '⚠️', ok: false },
+                  { label: '농취증 필요', value: '취득 시 필요',            icon: '✅', ok: true },
+                  { label: '신탁 가능',  value: '농지신탁 가능',            icon: '✅', ok: true },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{item.label}</span>
-                    <span className={`text-sm font-medium ${item.color}`}>{item.value}</span>
+                  <div key={item.label} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-slate-600">{item.label}</span>
+                    <span className={`text-xs font-semibold flex items-center gap-1 ${item.ok ? 'text-emerald-700' : 'text-amber-600'}`}>
+                      {item.icon} {item.value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -164,92 +174,92 @@ export default function LandDetailPage({ land, onNavigate }) {
 
             <button
               onClick={() => onNavigate('consult')}
-              className="w-full bg-earth-600 text-white py-4 rounded-xl font-semibold text-sm hover:bg-earth-700 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 flex items-center justify-center gap-2 shadow-md"
+              style={{ background: 'linear-gradient(135deg, #7c4d18 0%, #9e631a 100%)' }}
             >
-              <span>🏛️</span>
-              농지신탁 무료 상담 신청
+              <span>🏛️</span> 농지신탁 무료 상담 신청
             </button>
-          </div>
+          </>
         )}
 
-        {/* 가격정보 탭 */}
+        {/* ── 가격정보 ── */}
         {activeTab === 'price' && (
-          <div className="space-y-4">
+          <>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-                <p className="text-xs text-gray-500 mb-1">개별 공시지가</p>
-                <p className="text-xl font-bold text-gray-900">{selectedLand.officialPrice.toLocaleString()}</p>
-                <p className="text-xs text-gray-400">원/㎡</p>
-                <p className="text-sm text-gray-600 mt-1 font-medium">
+              <div className="card text-center">
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-1">개별 공시지가</p>
+                <p className="text-2xl font-black text-slate-800">{selectedLand.officialPrice.toLocaleString()}</p>
+                <p className="text-xs text-slate-400 mb-1">원/㎡</p>
+                <p className="text-sm font-semibold text-slate-600">
                   총 {formatPrice(selectedLand.officialPrice * selectedLand.area)}
                 </p>
               </div>
-              <div className="bg-white rounded-xl border border-primary-200 shadow-sm p-4 text-center">
-                <p className="text-xs text-gray-500 mb-1">인근 실거래가</p>
-                <p className="text-xl font-bold text-primary-700">{selectedLand.dealPrice.toLocaleString()}</p>
-                <p className="text-xs text-gray-400">원/㎡</p>
-                <p className="text-sm text-primary-600 mt-1 font-medium">공시가 대비 {ratio}%</p>
+              <div className="card text-center border-primary-200 bg-primary-50">
+                <p className="text-xs text-primary-500 font-semibold uppercase tracking-wide mb-1">인근 실거래가</p>
+                <p className="text-2xl font-black text-primary-700">{selectedLand.dealPrice?.toLocaleString() ?? '-'}</p>
+                <p className="text-xs text-primary-400 mb-1">원/㎡</p>
+                <p className="text-sm font-semibold text-primary-600">공시가 대비 {ratio}%</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-gray-700">공시가 대비 실거래 비율</span>
+            <div className="card">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-bold text-slate-700">공시가 대비 실거래 비율</span>
                 <span className={`text-sm font-bold ${Number(ratio) > 150 ? 'text-red-500' : 'text-primary-600'}`}>
                   {ratio}%
                 </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2.5 mt-2">
+              <div className="w-full bg-slate-100 rounded-full h-3">
                 <div
-                  className="h-2.5 rounded-full bg-primary-500"
+                  className="h-3 rounded-full bg-gradient-to-r from-primary-400 to-primary-600"
                   style={{ width: `${Math.min(Number(ratio), 200) / 2}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                공시가의 {ratio}% 수준 —{' '}
+              <p className="text-xs text-slate-400 mt-2">
+                공시가의 {ratio}% —{' '}
                 {Number(ratio) > 150 ? '고평가 구간' : Number(ratio) > 100 ? '적정 수준' : '저평가 가능성'}
               </p>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-sm font-bold text-gray-700 mb-1">최근 실거래 내역</p>
-              <p className="text-xs text-gray-400 mb-3">인근 500m 이내 · 최근 3건</p>
-              <div className="space-y-2">
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-0.5">최근 실거래 내역</p>
+              <p className="text-xs text-slate-400 mb-4">인근 500m 이내 · 최근 3건</p>
+              <div className="space-y-1.5">
                 {RECENT_DEALS.map((deal, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <div>
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded mr-1">{deal.type}</span>
-                      <span className="text-xs text-gray-500">{deal.date} · {deal.area.toLocaleString()}㎡</span>
+                  <div key={i} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="badge bg-amber-100 text-amber-700">{deal.type}</span>
+                      <span className="text-xs text-slate-500">{deal.date} · {deal.area.toLocaleString()}㎡</span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900">{deal.price.toLocaleString()}원/㎡</span>
+                    <span className="text-sm font-bold text-slate-800">{deal.price.toLocaleString()}원/㎡</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-sm font-bold text-gray-700">가격 추이 (최근 4년)</p>
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700">가격 추이 (최근 4년)</p>
               <PriceChart data={priceHistory} />
             </div>
-          </div>
+          </>
         )}
 
-        {/* 분석 탭 */}
+        {/* ── 분석 ── */}
         {activeTab === 'analysis' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-sm font-bold text-gray-700 mb-4">농지 리스크 스코어</p>
-              <RiskBar score={selectedLand.riskScore} />
-              <div className="mt-4 space-y-2">
+          <>
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-3">농지 리스크 스코어</p>
+              <RiskMeter score={selectedLand.riskScore} />
+              <div className="mt-4 space-y-2.5">
                 {[
-                  { label: '자경 이력', status: selectedLand.riskScore >= 50 ? '없음' : '있음', ok: selectedLand.riskScore < 50 },
-                  { label: '농업경영계획서', status: '제출 필요', ok: false },
-                  { label: '임대차 계약', status: '미체결', ok: false },
-                  { label: '처분 의무 통보', status: '해당 없음', ok: true },
+                  { label: '자경 이력',      status: selectedLand.riskScore >= 50 ? '없음' : '있음', ok: selectedLand.riskScore < 50 },
+                  { label: '농업경영계획서',  status: '제출 필요',  ok: false },
+                  { label: '임대차 계약',    status: '미체결',     ok: false },
+                  { label: '처분 의무 통보',  status: '해당 없음',  ok: true },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">{item.label}</span>
-                    <span className={`text-xs font-medium ${item.ok ? 'text-green-600' : 'text-red-500'}`}>
+                  <div key={item.label} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-slate-600">{item.label}</span>
+                    <span className={`text-xs font-semibold ${item.ok ? 'text-emerald-600' : 'text-red-500'}`}>
                       {item.ok ? '✅' : '⚠️'} {item.status}
                     </span>
                   </div>
@@ -257,42 +267,44 @@ export default function LandDetailPage({ land, onNavigate }) {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-sm font-bold text-gray-700 mb-1">축사 검색 결과</p>
-              <p className="text-xs text-gray-400 mb-4">키워드: 축사·돈사·계사·우사·양계장·양돈장·한우</p>
-              <div className="space-y-3">
-                {nearbyLivestock.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
-                    <span className="text-2xl">{LIVESTOCK_ICONS[item.type] || '🏠'}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.type} · {item.distance}m</p>
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-0.5">축사 검색 결과</p>
+              <p className="text-xs text-slate-400 mb-4">키워드: 축사·돈사·계사·우사·양계장·양돈장·한우</p>
+              <div className="space-y-2.5">
+                {nearbyLivestock.map((item) => {
+                  const danger = item.distance <= 300;
+                  const caution = item.distance <= 500;
+                  return (
+                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                      <span className="text-2xl">{LIVESTOCK_ICONS[item.type] || '🏠'}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-800">{item.name}</p>
+                        <p className="text-xs text-slate-400">{item.type} · {item.distance}m</p>
+                      </div>
+                      <span className={`badge ${
+                        danger ? 'bg-red-100 text-red-700' :
+                        caution ? 'bg-amber-100 text-amber-700' :
+                        'bg-slate-100 text-slate-600'
+                      }`}>
+                        {danger ? '위험' : caution ? '주의' : '참고'}
+                      </span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      item.distance <= 300 ? 'bg-red-100 text-red-700' :
-                      item.distance <= 500 ? 'bg-orange-100 text-orange-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {item.distance <= 300 ? '위험' : item.distance <= 500 ? '주의' : '참고'}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-100">
-                <p className="text-xs text-red-700 font-medium">
-                  ⚠️ 300m 이내 돈사(양돈장)가 있습니다. 악취·민원 가능성을 확인하세요.
-                </p>
+                <p className="text-xs text-red-700 font-semibold">⚠️ 300m 이내 돈사(양돈장)가 있습니다. 악취·민원 가능성을 확인하세요.</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <p className="text-sm font-bold text-gray-700 mb-3">주변 환경 분석</p>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="card">
+              <p className="text-sm font-bold text-slate-700 mb-3">주변 환경 분석</p>
+              <div className="grid grid-cols-3 gap-2">
                 {ENV_ITEMS.map((env) => (
-                  <div key={env.label} className={`p-3 rounded-xl border text-center ${env.ok ? 'border-green-100 bg-green-50' : 'border-orange-100 bg-orange-50'}`}>
+                  <div key={env.label} className={`p-3 rounded-xl text-center border ${env.ok ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'}`}>
                     <span className="text-lg">{env.ok ? '✅' : '⚠️'}</span>
-                    <p className="text-xs font-medium text-gray-700 mt-1">{env.label}</p>
-                    <p className={`text-xs ${env.ok ? 'text-green-600' : 'text-orange-600'}`}>
+                    <p className="text-xs font-semibold text-slate-700 mt-1">{env.label}</p>
+                    <p className={`text-xs mt-0.5 ${env.ok ? 'text-emerald-600' : 'text-amber-600'}`}>
                       {env.count > 0 ? `${env.count}건` : '없음'}
                     </p>
                   </div>
@@ -300,19 +312,22 @@ export default function LandDetailPage({ land, onNavigate }) {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-4 text-white">
+            <div
+              className="rounded-2xl p-5 text-white"
+              style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0f766e 100%)' }}
+            >
               <p className="font-bold mb-1">🏛️ 농지신탁 안내</p>
-              <p className="text-sm text-primary-100 mb-3">
+              <p className="text-sm text-primary-200 mb-4">
                 이 토지는 농지신탁 적용 가능합니다. 자경 의무 없이 합법적으로 보유하세요.
               </p>
               <button
                 onClick={() => onNavigate('consult')}
-                className="w-full bg-white text-primary-700 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-50 transition-colors"
+                className="w-full bg-white text-primary-800 py-2.5 rounded-xl text-sm font-bold hover:bg-primary-50 transition-colors"
               >
                 무료 상담 신청하기
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
