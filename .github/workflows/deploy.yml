@@ -3,52 +3,34 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
-      - claude/agri-land-matching-mvp-Hcz0a
-      - claude/restart-with-dddang-JkzsE
+      - master
+      - 'claude/**'
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
         run: npm run build
-        env:
-          VITE_KAKAO_MAP_KEY: d979f3b1bc33fabb3cfab46e6174d90f
-          VITE_LAND_TRADE_KEY: Phkre9DoicHd0pTNbufNEYjyQt3+TkBFcY/j3wpHq4A5Jfp/xx2aXIeKeCF+xoVGUeLjlQVX8rrpcFKsKikldw==
-          VITE_VWORLD_KEY: A52CE9F8-406D-3143-8FB0-3499495BC3A3
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages

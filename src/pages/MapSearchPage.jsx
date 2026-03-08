@@ -6,6 +6,18 @@ import { geocodeAddress } from '../services/landApi';
 const DEAL_TYPES = ['전체', '매매', '임대'];
 const LAND_TYPES = ['전체', '전', '답', '임야', '대지'];
 
+const LAYER_BUTTONS = [
+  { id: '지도',    label: '지도' },
+  { id: '지적',    label: '지적' },
+  { id: '실거래가', label: '실거래가' },
+  { id: '매물',    label: '매물' },
+  { id: '경매임박', label: '경매임박' },
+  { id: '토지분양', label: '토지분양' },
+  { id: '공매',    label: '공매',    isNew: true },
+  { id: '건축허가', label: '건축허가', isNew: true },
+  { id: '개발공사', label: '개발공사', isNew: true },
+];
+
 const TYPE_COLORS = {
   전: { bg: '#d97706', text: '#fff' },
   답: { bg: '#2563eb', text: '#fff' },
@@ -46,6 +58,7 @@ export default function MapSearchPage({ onNavigate }) {
   const [showDetail, setShowDetail] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [mapReady, setMapReady] = useState(false);
+  const [activeLayer, setActiveLayer] = useState('지도');
 
   // 항상 최신 상태 참조
   const setSelectedListingRef = useRef(null);
@@ -205,12 +218,17 @@ export default function MapSearchPage({ onNavigate }) {
         <span className="text-xs font-bold text-primary-600">{filteredListings.length}건</span>
       </button>
 
-      {/* 지도 컨트롤 */}
-      <div className="absolute z-20 flex flex-col gap-2" style={{ bottom: '120px', right: '12px' }}>
+      {/* 줌 컨트롤 (왼쪽 하단) */}
+      <div className="absolute z-20 flex flex-col gap-2" style={{ bottom: '120px', left: '12px' }}>
         <button onClick={() => kakaoMapRef.current?.setLevel(kakaoMapRef.current.getLevel() - 1)}
           className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-gray-600 font-bold text-xl hover:bg-gray-50 leading-none">+</button>
         <button onClick={() => kakaoMapRef.current?.setLevel(kakaoMapRef.current.getLevel() + 1)}
           className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-gray-600 font-bold text-xl hover:bg-gray-50 leading-none">−</button>
+      </div>
+
+      {/* 오른쪽 레이어 버튼 패널 */}
+      <div className="absolute z-20 flex flex-col gap-1.5" style={{ top: '130px', right: '12px' }}>
+        {/* 현재 위치 버튼 */}
         <button
           onClick={() => navigator.geolocation?.getCurrentPosition(
             ({ coords }) => {
@@ -218,13 +236,41 @@ export default function MapSearchPage({ onNavigate }) {
               kakaoMapRef.current?.setLevel(6);
             }
           )}
-          className="bg-white rounded-xl shadow-md w-9 h-9 flex items-center justify-center text-primary-600 hover:bg-gray-50"
+          className="bg-white rounded-xl shadow-md w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
+          title="현재 위치"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="7" strokeWidth="2" />
+            <circle cx="12" cy="12" r="2" strokeWidth="2" fill="currentColor" />
+            <line x1="12" y1="2" x2="12" y2="5" strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="19" x2="12" y2="22" strokeWidth="2" strokeLinecap="round" />
+            <line x1="2" y1="12" x2="5" y2="12" strokeWidth="2" strokeLinecap="round" />
+            <line x1="19" y1="12" x2="22" y2="12" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
+
+        {/* 레이어 선택 버튼 목록 */}
+        <div className="bg-white rounded-xl shadow-md flex flex-col overflow-hidden">
+          {LAYER_BUTTONS.map((btn) => (
+            <button
+              key={btn.id}
+              onClick={() => setActiveLayer(btn.id)}
+              className={`relative px-3 py-2 text-xs font-bold border-b border-gray-100 last:border-0 transition-colors min-w-[52px] text-center ${
+                activeLayer === btn.id
+                  ? 'text-primary-600 bg-primary-50'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {btn.label}
+              {btn.isNew && (
+                <span className="absolute top-0.5 right-0.5 bg-red-500 text-white font-bold rounded-full flex items-center justify-center leading-none"
+                  style={{ fontSize: '8px', width: '13px', height: '13px' }}>
+                  N
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 매물 목록 패널 */}
