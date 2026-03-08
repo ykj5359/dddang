@@ -9,11 +9,78 @@
     padding: 0;
   }
 
+  html, body, #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+
   body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #f8faf8;
     color: #1a1a1a;
-    min-height: 100vh;
+  }
+}
+
+/* PC 페이지 컨테이너 */
+.pc-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px 40px;
+}
+
+/* PC 2열 그리드 */
+.pc-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* 배너 풀 너비 */
+.pc-banner {
+  width: 100%;
+  padding: 40px 32px;
+}
+
+.pc-banner-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 탭 바 */
+.pc-tabs {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 56px;
+  z-index: 30;
+}
+
+.pc-tabs-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  gap: 0;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .pc-container {
+    padding: 0 16px 80px;
+  }
+
+  .pc-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-banner {
+    padding: 24px 16px;
+  }
+
+  .pc-tabs-inner {
+    padding: 0;
   }
 }
 
@@ -32,21 +99,5 @@
 
   .btn-outline {
     @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-lg font-medium hover:bg-primary-50 transition-colors;
-  }
-
-  .badge-danger {
-    @apply bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full;
-  }
-
-  .badge-warning {
-    @apply bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full;
-  }
-
-  .badge-info {
-    @apply bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full;
-  }
-
-  .badge-success {
-    @apply bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full;
   }
 }
