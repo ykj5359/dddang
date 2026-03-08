@@ -11,8 +11,8 @@ export default function Header({ currentTab }) {
   const title = PAGE_TITLES[currentTab] || '땅땅땅';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 max-w-md mx-auto">
-      <div className="flex items-center justify-between px-4 h-14">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 h-14 md:pl-60">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🌱</span>
           <span className="font-bold text-lg text-primary-700">{title}</span>
