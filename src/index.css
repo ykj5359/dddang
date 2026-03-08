@@ -3,17 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  html, body, #root {
-    width: 100%;
-    min-height: 100vh;
-  }
-
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { width: 100%; min-height: 100vh; }
   body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: #f8faf8;
@@ -21,15 +12,85 @@
   }
 }
 
-/* PC 페이지 컨테이너 */
+/* ═══════════════════════════════════════
+   앱 레이아웃 (CSS 미디어쿼리 기반)
+═══════════════════════════════════════ */
+
+/* 헤더: 항상 전체 너비 상단 고정 */
+.app-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+}
+
+/* 사이드바: 모바일에서 숨김 */
+.app-sidebar {
+  display: none;
+}
+
+/* 메인: 헤더 아래, 모바일은 하단 탭 공간 확보 */
+.app-main {
+  margin-top: 56px;
+  margin-left: 0;
+  min-height: calc(100vh - 56px);
+  overflow-x: hidden;
+}
+
+/* 하단 탭바: 모바일에서만 표시 */
+.app-bottomnav {
+  display: flex;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  z-index: 40;
+}
+
+/* ─── 데스크탑 (768px 이상) ─── */
+@media (min-width: 768px) {
+  .app-header-inner {
+    padding-left: 240px !important;
+  }
+
+  .app-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 56px; left: 0; bottom: 0;
+    width: 240px;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    z-index: 40;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .app-main {
+    margin-left: 240px;
+    padding-bottom: 0;
+  }
+
+  .app-bottomnav {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   페이지 공통 컨테이너
+═══════════════════════════════════════ */
 .pc-container {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 32px 40px;
+  padding: 24px 24px 40px;
 }
 
-/* PC 2열 그리드 */
 .pc-grid-2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -37,18 +98,6 @@
   align-items: start;
 }
 
-/* 배너 풀 너비 */
-.pc-banner {
-  width: 100%;
-  padding: 40px 32px;
-}
-
-.pc-banner-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* 탭 바 */
 .pc-tabs {
   background: white;
   border-bottom: 1px solid #e5e7eb;
@@ -60,44 +109,13 @@
 .pc-tabs-inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 24px;
   display: flex;
-  gap: 0;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .pc-container {
-    padding: 0 16px 80px;
-  }
-
-  .pc-grid-2 {
-    grid-template-columns: 1fr;
-  }
-
-  .pc-banner {
-    padding: 24px 16px;
-  }
-
-  .pc-tabs-inner {
-    padding: 0;
-  }
-}
-
-@layer components {
-  .tab-active {
-    @apply text-primary-600 border-b-2 border-primary-600;
-  }
-
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4;
-  }
-
-  .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors;
-  }
-
-  .btn-outline {
-    @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-lg font-medium hover:bg-primary-50 transition-colors;
-  }
+@media (max-width: 767px) {
+  .pc-container { padding: 16px 16px 80px; }
+  .pc-grid-2 { grid-template-columns: 1fr; }
+  .pc-tabs-inner { padding: 0; }
+  .app-main { padding-bottom: 64px; }
 }
