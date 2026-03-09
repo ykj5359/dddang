@@ -7,6 +7,8 @@ import LandDetailPage from './pages/LandDetailPage';
 import FarmingMatchPage from './pages/FarmingMatchPage';
 import MyLandPage from './pages/MyLandPage';
 import ConsultPage from './pages/ConsultPage';
+import { myLands as defaultMyLands, savedLands as defaultSavedLands } from './data/dummyData';
+import { loadMyLands, persistMyLands, loadSavedLands, persistSavedLands } from './utils/storage';
 
 export const NAV_ITEMS = [
   {
@@ -64,6 +66,48 @@ export const NAV_ITEMS = [
 export default function App() {
   const [currentTab, setCurrentTab] = useState('home');
   const [selectedLand, setSelectedLand] = useState(null);
+  const [myLands, setMyLands] = useState(() => loadMyLands(defaultMyLands));
+  const [savedLands, setSavedLands] = useState(() => loadSavedLands(defaultSavedLands));
+
+  const updateMyLands = (lands) => {
+    setMyLands(lands);
+    persistMyLands(lands);
+  };
+
+  const updateSavedLands = (lands) => {
+    setSavedLands(lands);
+    persistSavedLands(lands);
+  };
+
+  const addMyLand = (land) => {
+    if (myLands.find((l) => l.id === land.id)) return;
+    const entry = {
+      id: land.id,
+      address: land.address,
+      type: land.type,
+      area: land.area,
+      officialPrice: land.officialPrice,
+      totalValue: land.officialPrice * land.area,
+    };
+    updateMyLands([...myLands, entry]);
+  };
+
+  const toggleSavedLand = (land) => {
+    const exists = savedLands.find((l) => l.id === land.id);
+    if (exists) {
+      updateSavedLands(savedLands.filter((l) => l.id !== land.id));
+    } else {
+      const entry = {
+        id: land.id,
+        address: land.address,
+        type: land.type,
+        area: land.area,
+        officialPrice: land.officialPrice,
+        totalValue: land.officialPrice * land.area,
+      };
+      updateSavedLands([...savedLands, entry]);
+    }
+  };
 
   const navigate = (tab, land = null) => {
     setCurrentTab(tab);
@@ -74,9 +118,26 @@ export default function App() {
     switch (currentTab) {
       case 'home':     return <HomePage onNavigate={navigate} />;
       case 'map':      return <MapSearchPage onNavigate={navigate} />;
-      case 'detail':   return <LandDetailPage land={selectedLand} onNavigate={navigate} />;
+      case 'detail':   return (
+        <LandDetailPage
+          land={selectedLand}
+          onNavigate={navigate}
+          onAddMyLand={addMyLand}
+          onToggleSaved={toggleSavedLand}
+          isInMyLands={selectedLand ? !!myLands.find((l) => l.id === selectedLand.id) : false}
+          isSaved={selectedLand ? !!savedLands.find((l) => l.id === selectedLand.id) : false}
+        />
+      );
       case 'matching': return <FarmingMatchPage />;
-      case 'myLand':   return <MyLandPage onNavigate={navigate} />;
+      case 'myLand':   return (
+        <MyLandPage
+          onNavigate={navigate}
+          myLands={myLands}
+          savedLands={savedLands}
+          onUpdateMyLands={updateMyLands}
+          onUpdateSavedLands={updateSavedLands}
+        />
+      );
       case 'consult':  return <ConsultPage />;
       default:         return <HomePage onNavigate={navigate} />;
     }

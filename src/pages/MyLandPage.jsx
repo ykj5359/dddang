@@ -1,13 +1,30 @@
 import { useState } from 'react';
-import { myLands, savedLands } from '../data/dummyData';
 import { formatPrice, formatArea, LAND_TYPE_COLORS } from '../utils/format';
+import { exportAsJson } from '../utils/storage';
 
-export default function MyLandPage({ onNavigate }) {
+export default function MyLandPage({ onNavigate, myLands, savedLands, onUpdateMyLands, onUpdateSavedLands }) {
   const [activeTab, setActiveTab] = useState('my');
 
   const totalValue = myLands.reduce((acc, l) => acc + l.totalValue, 0);
   const totalArea  = myLands.reduce((acc, l) => acc + l.area, 0);
   const totalPyeong = Math.round(totalArea / 3.3058);
+
+  const handleExport = () => {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      myLands,
+      savedLands,
+    };
+    exportAsJson(data, `dddang_농지데이터_${new Date().toISOString().slice(0, 10)}.json`);
+  };
+
+  const removeMyLand = (id) => {
+    onUpdateMyLands(myLands.filter((l) => l.id !== id));
+  };
+
+  const removeSavedLand = (id) => {
+    onUpdateSavedLands(savedLands.filter((l) => l.id !== id));
+  };
 
   return (
     <div>
@@ -17,14 +34,25 @@ export default function MyLandPage({ onNavigate }) {
         style={{ background: 'linear-gradient(135deg, #0f172a 0%, #115e59 100%)' }}
       >
         <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
-        <p className="text-primary-300 text-xs font-semibold uppercase tracking-widest mb-3">보유 농지 현황</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-primary-300 text-xs font-semibold uppercase tracking-widest">보유 농지 현황</p>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            JSON 내보내기
+          </button>
+        </div>
 
         <div className="grid grid-cols-3 gap-3 mb-4">
           {[
             { label: '필지 수',   value: myLands.length, unit: '필지' },
             { label: '총 면적',   value: totalPyeong.toLocaleString(), unit: '평' },
-            { label: '필지 수',   value: myLands.length, unit: '필지' },
-          ].filter((_, i) => i < 2).map((stat, i) => (
+          ].map((stat, i) => (
             <div key={i} className="bg-white/10 rounded-2xl px-3 py-3">
               <p className="text-xs text-primary-300 mb-1">{stat.label}</p>
               <p className="text-xl font-black text-white">
@@ -71,30 +99,40 @@ export default function MyLandPage({ onNavigate }) {
         {activeTab === 'my' && (
           <>
             {myLands.map((land) => (
-              <button
-                key={land.id}
-                onClick={() => onNavigate('detail', land)}
-                className="w-full card-hover text-left"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <span className={`badge mb-2 ${LAND_TYPE_COLORS[land.type] || 'bg-slate-100 text-slate-600'}`}>
-                      {land.type}
-                    </span>
-                    <p className="text-sm font-bold text-slate-800 leading-tight truncate">{land.address}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{formatArea(land.area)}</p>
+              <div key={land.id} className="card-hover relative">
+                <button
+                  onClick={() => onNavigate('detail', land)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start justify-between pr-6">
+                    <div className="flex-1 min-w-0">
+                      <span className={`badge mb-2 ${LAND_TYPE_COLORS[land.type] || 'bg-slate-100 text-slate-600'}`}>
+                        {land.type}
+                      </span>
+                      <p className="text-sm font-bold text-slate-800 leading-tight truncate">{land.address}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{formatArea(land.area)}</p>
+                    </div>
+                    <div className="text-right ml-4 flex-shrink-0">
+                      <p className="text-sm font-black text-primary-700">{formatPrice(land.totalValue)}</p>
+                      <p className="text-xs text-slate-400">공시 {land.officialPrice.toLocaleString()}원/㎡</p>
+                    </div>
                   </div>
-                  <div className="text-right ml-4 flex-shrink-0">
-                    <p className="text-sm font-black text-primary-700">{formatPrice(land.totalValue)}</p>
-                    <p className="text-xs text-slate-400">공시 {land.officialPrice.toLocaleString()}원/㎡</p>
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-100 font-semibold">공시지가 조회</span>
+                    <span className="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-lg border border-sky-100 font-semibold">실거래가 조회</span>
+                    <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg border border-amber-100 font-semibold">리스크 분석</span>
                   </div>
-                </div>
-                <div className="mt-3 flex gap-2 flex-wrap">
-                  <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-100 font-semibold">공시지가 조회</span>
-                  <span className="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-lg border border-sky-100 font-semibold">실거래가 조회</span>
-                  <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg border border-amber-100 font-semibold">리스크 분석</span>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={() => removeMyLand(land.id)}
+                  className="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition-colors"
+                  title="삭제"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             ))}
 
             <button
@@ -118,28 +156,38 @@ export default function MyLandPage({ onNavigate }) {
               </div>
             ) : (
               savedLands.map((land) => (
-                <button
-                  key={land.id}
-                  onClick={() => onNavigate('detail', land)}
-                  className="w-full card-hover text-left"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`badge ${LAND_TYPE_COLORS[land.type] || 'bg-slate-100 text-slate-600'}`}>
-                          {land.type}
-                        </span>
-                        <span className="text-xs text-slate-400 font-medium">관심 등록</span>
+                <div key={land.id} className="card-hover relative">
+                  <button
+                    onClick={() => onNavigate('detail', land)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between pr-6">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`badge ${LAND_TYPE_COLORS[land.type] || 'bg-slate-100 text-slate-600'}`}>
+                            {land.type}
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">관심 등록</span>
+                        </div>
+                        <p className="text-sm font-bold text-slate-800 truncate">{land.address}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{formatArea(land.area)}</p>
                       </div>
-                      <p className="text-sm font-bold text-slate-800 truncate">{land.address}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{formatArea(land.area)}</p>
+                      <div className="text-right ml-4 flex-shrink-0">
+                        <p className="text-sm font-black text-slate-700">{formatPrice(land.totalValue)}</p>
+                        <p className="text-xs text-slate-400">공시 {land.officialPrice.toLocaleString()}원/㎡</p>
+                      </div>
                     </div>
-                    <div className="text-right ml-4 flex-shrink-0">
-                      <p className="text-sm font-black text-slate-700">{formatPrice(land.totalValue)}</p>
-                      <p className="text-xs text-slate-400">공시 {land.officialPrice.toLocaleString()}원/㎡</p>
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    onClick={() => removeSavedLand(land.id)}
+                    className="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition-colors"
+                    title="삭제"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               ))
             )}
           </>

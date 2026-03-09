@@ -77,7 +77,7 @@ const ENV_ITEMS = [
   { label: '수원 접근', count: 1, ok: true },
 ];
 
-export default function LandDetailPage({ land, onNavigate }) {
+export default function LandDetailPage({ land, onNavigate, onAddMyLand, onToggleSaved, isInMyLands, isSaved }) {
   const [activeTab, setActiveTab] = useState('info');
   const selectedLand = land || recentLands[0];
 
@@ -112,6 +112,40 @@ export default function LandDetailPage({ land, onNavigate }) {
         </div>
         <h2 className="text-white font-bold text-base leading-snug">{selectedLand.address}</h2>
         <p className="text-primary-300 text-sm mt-1">{formatArea(selectedLand.area)}</p>
+
+        {onAddMyLand && onToggleSaved && (
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => onAddMyLand(selectedLand)}
+              disabled={isInMyLands}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors ${
+                isInMyLands
+                  ? 'bg-white/10 text-white/40 cursor-default'
+                  : 'bg-white/20 hover:bg-white/30 text-white'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 4v16m8-8H4" />
+              </svg>
+              {isInMyLands ? '내 토지 등록됨' : '내 토지 등록'}
+            </button>
+            <button
+              onClick={() => onToggleSaved(selectedLand)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-colors ${
+                isSaved
+                  ? 'bg-amber-400/30 text-amber-200 hover:bg-amber-400/20'
+                  : 'bg-white/20 hover:bg-white/30 text-white'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              {isSaved ? '관심 필지 해제' : '관심 필지 저장'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Tabs ── */}
