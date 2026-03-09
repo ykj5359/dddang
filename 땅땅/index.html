@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>땅땅 - 토지 거래 플랫폼</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#" class="logo">🌾 땅땅</a>
+      <nav class="nav">
+        <a href="#features">서비스</a>
+        <a href="#listings">매물</a>
+        <a href="#consult">상담</a>
+        <a href="#contact">문의</a>
+      </nav>
+      <div class="header-btns">
+        <button class="btn btn-outline">로그인</button>
+        <button class="btn btn-primary">무료 시작</button>
+      </div>
+      <button class="hamburger" id="hamburger">&#9776;</button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#features">서비스</a>
+      <a href="#listings">매물</a>
+      <a href="#consult">상담</a>
+      <a href="#contact">문의</a>
+      <button class="btn btn-primary" style="margin-top:8px;width:100%">무료 시작</button>
+    </div>
+  </header>
+
+  <!-- 히어로 -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <span class="badge">신뢰할 수 있는 토지 거래</span>
+        <h1>내 땅, 제대로 <br /><span class="highlight">알고 거래하자</span></h1>
+        <p>전국 토지 실거래가 분석부터 전문가 상담까지.<br />땅땅과 함께 안전하고 스마트한 토지 거래를 시작하세요.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg">매물 검색하기</button>
+          <button class="btn btn-ghost btn-lg">무료 상담 신청</button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><strong>12,000+</strong><span>등록 매물</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><strong>8,500+</strong><span>거래 완료</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><strong>2,300+</strong><span>전문가 파트너</span></div>
+        </div>
+      </div>
+      <div class="hero-image">
+        <div class="map-card">
+          <div class="map-placeholder">
+            <span class="map-icon">🗺️</span>
+            <p>실시간 토지 지도</p>
+            <div class="map-pins">
+              <span class="pin pin1">₩1.2억</span>
+              <span class="pin pin2">₩3.8억</span>
+              <span class="pin pin3">₩7.5억</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 검색 바 -->
+  <section class="search-bar-section">
+    <div class="container">
+      <div class="search-box">
+        <select class="search-select">
+          <option>지역 선택</option>
+          <option>서울</option>
+          <option>경기</option>
+          <option>강원</option>
+          <option>충청</option>
+          <option>전라</option>
+          <option>경상</option>
+          <option>제주</option>
+        </select>
+        <select class="search-select">
+          <option>토지 유형</option>
+          <option>농지</option>
+          <option>임야</option>
+          <option>대지</option>
+          <option>전답</option>
+        </select>
+        <select class="search-select">
+          <option>가격대</option>
+          <option>1억 이하</option>
+          <option>1~3억</option>
+          <option>3~5억</option>
+          <option>5억 이상</option>
+        </select>
+        <button class="btn btn-primary search-btn">🔍 검색</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 서비스 특징 -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>왜 <span class="highlight">땅땅</span>인가요?</h2>
+        <p>복잡한 토지 거래, 땅땅이 쉽게 만들어드립니다</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>실거래가 분석</h3>
+          <p>최근 5년간 실거래 데이터를 기반으로 정확한 시세를 확인하세요.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>지도 기반 검색</h3>
+          <p>지도 위에서 원하는 위치의 매물을 직관적으로 탐색하세요.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👨‍💼</div>
+          <h3>전문가 매칭</h3>
+          <p>지역 전문 공인중개사와 법무사를 바로 연결해드립니다.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌾</div>
+          <h3>농업 매칭</h3>
+          <p>유휴 농지와 귀농 희망자를 스마트하게 연결합니다.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📋</div>
+          <h3>서류 자동화</h3>
+          <p>등기부등본, 토지이용계획 확인서를 원클릭으로 발급하세요.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>안전 거래</h3>
+          <p>에스크로 서비스로 사기 없는 안전한 거래를 보장합니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 매물 리스트 -->
+  <section class="listings" id="listings">
+    <div class="container">
+      <div class="section-header">
+        <h2>추천 <span class="highlight">매물</span></h2>
+        <p>오늘 새로 등록된 알짜 매물을 확인하세요</p>
+      </div>
+      <div class="listings-grid">
+        <div class="listing-card">
+          <div class="listing-img" style="background:#d4e8c2;">
+            <span class="listing-tag">농지</span>
+            <span class="listing-tag tag-new">신규</span>
+          </div>
+          <div class="listing-info">
+            <h4>경기도 이천시 논 1,200평</h4>
+            <p class="listing-loc">📍 경기도 이천시 장호원읍</p>
+            <p class="listing-desc">일조량 풍부, 수리시설 완비, 접근성 우수</p>
+            <div class="listing-footer">
+              <strong class="listing-price">₩ 2억 4,000만</strong>
+              <span class="listing-per">평당 20만원</span>
+            </div>
+          </div>
+        </div>
+        <div class="listing-card">
+          <div class="listing-img" style="background:#c2d4e8;">
+            <span class="listing-tag tag-blue">임야</span>
+          </div>
+          <div class="listing-info">
+            <h4>강원도 홍천군 임야 5,000평</h4>
+            <p class="listing-loc">📍 강원도 홍천군 서면</p>
+            <p class="listing-desc">수목 울창, 계곡 인접, 개발 가능 구역</p>
+            <div class="listing-footer">
+              <strong class="listing-price">₩ 7,500만</strong>
+              <span class="listing-per">평당 1.5만원</span>
+            </div>
+          </div>
+        </div>
+        <div class="listing-card">
+          <div class="listing-img" style="background:#e8d4c2;">
+            <span class="listing-tag tag-orange">대지</span>
+            <span class="listing-tag tag-hot">인기</span>
+          </div>
+          <div class="listing-info">
+            <h4>충남 천안시 대지 300평</h4>
+            <p class="listing-loc">📍 충남 천안시 서북구</p>
+            <p class="listing-desc">도로 접함, 상업지역 인근, 건축허가 가능</p>
+            <div class="listing-footer">
+              <strong class="listing-price">₩ 6억 원</strong>
+              <span class="listing-per">평당 200만원</span>
+            </div>
+          </div>
+        </div>
+        <div class="listing-card">
+          <div class="listing-img" style="background:#e8e8c2;">
+            <span class="listing-tag">전답</span>
+          </div>
+          <div class="listing-info">
+            <h4>전북 김제시 전답 800평</h4>
+            <p class="listing-loc">📍 전북 김제시 금구면</p>
+            <p class="listing-desc">비옥한 토양, 농업용수 풍부, 영농 활성화 지역</p>
+            <div class="listing-footer">
+              <strong class="listing-price">₩ 9,600만</strong>
+              <span class="listing-per">평당 12만원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:40px;">
+        <button class="btn btn-outline btn-lg">전체 매물 보기 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 상담 섹션 -->
+  <section class="consult" id="consult">
+    <div class="container consult-inner">
+      <div class="consult-text">
+        <h2>전문가와 <span class="highlight">무료 상담</span>하세요</h2>
+        <p>토지 매입, 개발, 세금, 농업 전환까지<br />모든 궁금증을 전문가가 직접 답변해드립니다.</p>
+        <ul class="consult-list">
+          <li>✅ 토지 적정 가격 분석</li>
+          <li>✅ 개발 가능 여부 검토</li>
+          <li>✅ 농지 전용 절차 안내</li>
+          <li>✅ 세금 절감 방법 상담</li>
+        </ul>
+        <button class="btn btn-primary btn-lg">상담 신청하기</button>
+      </div>
+      <div class="consult-form">
+        <h3>빠른 상담 신청</h3>
+        <form onsubmit="submitForm(event)">
+          <input type="text" placeholder="이름" class="form-input" required />
+          <input type="tel" placeholder="연락처 (010-0000-0000)" class="form-input" required />
+          <select class="form-input">
+            <option value="">상담 유형 선택</option>
+            <option>토지 매입 상담</option>
+            <option>농지 전용 상담</option>
+            <option>세금 절감 상담</option>
+            <option>개발 가능 여부</option>
+          </select>
+          <textarea placeholder="문의 내용을 입력하세요" class="form-input form-textarea"></textarea>
+          <button type="submit" class="btn btn-primary" style="width:100%">신청하기</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 통계 배너 -->
+  <section class="stats-banner">
+    <div class="container stats-grid">
+      <div class="stats-item">
+        <strong>98%</strong>
+        <span>고객 만족도</span>
+      </div>
+      <div class="stats-item">
+        <strong>평균 23일</strong>
+        <span>거래 완료 기간</span>
+      </div>
+      <div class="stats-item">
+        <strong>0건</strong>
+        <span>사기 피해 사례</span>
+      </div>
+      <div class="stats-item">
+        <strong>전국 17개</strong>
+        <span>광역시도 커버리지</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 문의 & 푸터 -->
+  <footer class="footer" id="contact">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a href="#" class="logo" style="color:#fff">🌾 땅땅</a>
+        <p>믿을 수 있는 토지 거래 플랫폼<br />복잡한 토지 거래를 쉽고 안전하게.</p>
+        <div class="social-links">
+          <a href="#">📘</a>
+          <a href="#">📸</a>
+          <a href="#">▶️</a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h4>서비스</h4>
+        <a href="#">토지 검색</a>
+        <a href="#">지도 검색</a>
+        <a href="#">전문가 상담</a>
+        <a href="#">농업 매칭</a>
+      </div>
+      <div class="footer-links">
+        <h4>고객지원</h4>
+        <a href="#">자주 묻는 질문</a>
+        <a href="#">이용 가이드</a>
+        <a href="#">1:1 문의</a>
+        <a href="#">공지사항</a>
+      </div>
+      <div class="footer-contact">
+        <h4>문의</h4>
+        <p>📞 1588-0000</p>
+        <p>✉️ help@ddangddang.kr</p>
+        <p>⏰ 평일 09:00 ~ 18:00</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2025 땅땅 Inc. All rights reserved. | 개인정보처리방침 | 이용약관</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 성공 모달 -->
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <span class="modal-close" onclick="closeModal()">✕</span>
+      <div class="modal-icon">✅</div>
+      <h3>상담 신청 완료!</h3>
+      <p>빠른 시일 내에 전문가가 연락드리겠습니다.</p>
+      <button class="btn btn-primary" onclick="closeModal()">확인</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
