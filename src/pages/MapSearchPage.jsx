@@ -161,7 +161,7 @@ export default function MapSearchPage({ onNavigate }) {
 
       {/* 상단 검색 + 필터 */}
       <div className="absolute top-3 left-3 right-3 z-20">
-        <div className="bg-white rounded-2xl shadow-lg flex items-center px-3 py-2.5 gap-2">
+        <div className="bg-white rounded-2xl shadow-xl flex items-center px-3 py-2.5 gap-2 border border-slate-100">
           <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
           </svg>
@@ -175,7 +175,7 @@ export default function MapSearchPage({ onNavigate }) {
           />
           <button
             onClick={handleSearch}
-            className="bg-primary-600 text-white text-xs px-3 py-1.5 rounded-xl font-semibold flex-shrink-0 hover:bg-primary-700 transition-colors"
+            className="bg-primary-600 text-white text-xs px-3 py-1.5 rounded-xl font-bold flex-shrink-0 hover:bg-primary-700 transition-colors"
           >
             검색
           </button>
@@ -275,7 +275,7 @@ export default function MapSearchPage({ onNavigate }) {
 
       {/* 매물 목록 패널 */}
       <div className={`absolute left-0 right-0 bottom-0 z-30 transition-transform duration-300 ${showPanel ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ maxHeight: '60vh' }}>
+        <div className="bg-white rounded-t-3xl shadow-2xl flex flex-col" style={{ maxHeight: '60vh' }}>
           <div className="flex justify-center pt-2.5 pb-1">
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
           </div>
@@ -298,8 +298,8 @@ export default function MapSearchPage({ onNavigate }) {
               </div>
             ) : filteredListings.map((listing) => (
               <button key={listing.id} onClick={() => handleListingClick(listing)}
-                className={`w-full text-left px-4 py-3.5 border-b border-gray-50 hover:bg-primary-50 transition-colors ${
-                  selectedListing?.id === listing.id ? 'bg-primary-50 border-l-2 border-l-primary-600' : ''
+                className={`w-full text-left px-4 py-3.5 border-b border-slate-50 hover:bg-primary-50 transition-colors ${
+                  selectedListing?.id === listing.id ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -327,7 +327,7 @@ export default function MapSearchPage({ onNavigate }) {
       {/* 매물 상세 바텀시트 */}
       {showDetail && selectedListing && (
         <div className="absolute bottom-0 left-0 right-0 z-30">
-          <div className="bg-white rounded-t-2xl shadow-2xl border-t border-gray-100">
+          <div className="bg-white rounded-t-3xl shadow-2xl border-t border-slate-100">
             <div className="flex justify-center pt-2.5 pb-1">
               <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
@@ -357,7 +357,7 @@ export default function MapSearchPage({ onNavigate }) {
                 </div>
                 <button
                   onClick={() => { onNavigate('detail', selectedListing); setShowDetail(false); }}
-                  className="bg-primary-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-primary-700 transition-colors flex-shrink-0"
+                  className="bg-primary-600 text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-primary-700 active:scale-95 transition-all flex-shrink-0"
                 >
                   상세보기 →
                 </button>
