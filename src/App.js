@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import LandDetail from './pages/LandDetail';
 import LandTypeHome from './pages/LandTypeHome';
@@ -18,6 +18,16 @@ import AlertSettings from './pages/AlertSettings';
 import FarmlandConsult from './pages/FarmlandConsult';
 import FarmlandMatching from './pages/FarmlandMatching';
 import MyLand from './pages/MyLand';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminLands from './pages/admin/AdminLands';
+import AdminConsultations from './pages/admin/AdminConsultations';
+
+function AdminGuard({ children }) {
+  const isAuth = sessionStorage.getItem('adminAuth') === 'true';
+  return isAuth ? children : <Navigate to="/admin" replace />;
+}
 
 function App() {
   return (
@@ -42,6 +52,12 @@ function App() {
         <Route path="/farmland-consult" element={<FarmlandConsult />} />
         <Route path="/farmland-matching" element={<FarmlandMatching />} />
         <Route path="/my-land" element={<MyLand />} />
+        {/* Admin */}
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/admin/users" element={<AdminGuard><AdminUsers /></AdminGuard>} />
+        <Route path="/admin/lands" element={<AdminGuard><AdminLands /></AdminGuard>} />
+        <Route path="/admin/consultations" element={<AdminGuard><AdminConsultations /></AdminGuard>} />
       </Routes>
     </Router>
   );
