@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/dddang/static/css/main.859aa999.css",
-    "main.js": "/dddang/static/js/main.18af63e7.js",
+    "main.js": "/dddang/static/js/main.4b0d31d7.js",
     "index.html": "/dddang/index.html",
     "main.859aa999.css.map": "/dddang/static/css/main.859aa999.css.map",
-    "main.18af63e7.js.map": "/dddang/static/js/main.18af63e7.js.map"
+    "main.4b0d31d7.js.map": "/dddang/static/js/main.4b0d31d7.js.map"
   },
   "entrypoints": [
     "static/css/main.859aa999.css",
-    "static/js/main.18af63e7.js"
+    "static/js/main.4b0d31d7.js"
   ]
 }
