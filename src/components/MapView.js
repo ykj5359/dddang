@@ -1,13 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-
-// webpack에서 leaflet 기본 마커 아이콘 경로 수정
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
 
 const LAND_DATA = [
   { id: 1,  lat: 37.5665, lng: 126.9780, address: '서울시 중구 명동',        price: '850000000',  area: '330㎡',  type: '대지', date: '2024-11', zoning: '일반상업지역',  coverage: 60, far: 800, road: '광대로',  shape: '정방형',  slope: '평지'   },
@@ -30,7 +21,7 @@ const LAND_DATA = [
   { id: 18, lat: 35.4606, lng: 128.2132, address: '경상남도 창원시 의창구',   price: '175000000',  area: '992㎡',  type: '공장', date: '2024-09', zoning: '준공업지역',    coverage: 70, far: 300, road: '8m 이상', shape: '장방형',  slope: '평지'   },
 ];
 
-const TYPE_COLOR = { 대지: '#1E6B3C', 임야: '#40916C', 농지: '#D97706', 공장: '#6B7280' };
+const TYPE_COLOR = { '대지': '#1E6B3C', '임야': '#40916C', '농지': '#D97706', '공장': '#6B7280' };
 const FILTERS = ['전체', '대지', '임야', '농지', '공장'];
 
 function fmtPrice(price) {
@@ -42,182 +33,106 @@ function fmtPrice(price) {
 function MapView({ searchAddress, onMarkerClick, panelOpen, height = 520 }) {
   const mapContainer = useRef(null);
   const mapRef       = useRef(null);
-  const markersRef   = useRef([]);
+  const overlaysRef  = useRef([]);
   const searchPinRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState('전체');
-  const [markerCount, setMarkerCount]   = useState(LAND_DATA.length);
+  const [markerCount,  setMarkerCount]  = useState(LAND_DATA.length);
+  const resolvedHeight = typeof height === 'number' ? height + 'px' : height;
 
-  const resolvedHeight = typeof height === 'number' ? `${height}px` : height;
-
-  /* ── 마커 렌더링 ── */
   const drawMarkers = (map, filter) => {
-    markersRef.current.forEach((m) => map.removeLayer(m));
-    markersRef.current = [];
-
+    overlaysRef.current.forEach((o) => o.setMap(null));
+    overlaysRef.current = [];
     const data = filter === '전체' ? LAND_DATA : LAND_DATA.filter((d) => d.type === filter);
     setMarkerCount(data.length);
-
     data.forEach((land) => {
       const color = TYPE_COLOR[land.type] || '#1E6B3C';
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="
-          background:${color};color:#fff;
-          padding:4px 10px;border-radius:12px;
-          font-size:11px;font-weight:700;
-          white-space:nowrap;cursor:pointer;
-          box-shadow:0 2px 8px rgba(0,0,0,0.28);
-          border:1.5px solid rgba(255,255,255,0.5);
-          position:relative;letter-spacing:-0.3px;
-          transform:translateX(-50%);">
-          ${fmtPrice(land.price)}
-          <div style="
-            position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);
-            width:0;height:0;
-            border-left:4px solid transparent;
-            border-right:4px solid transparent;
-            border-top:5px solid ${color};"></div>
-        </div>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 28],
-      });
-
-      const marker = L.marker([land.lat, land.lng], { icon })
-        .addTo(map)
-        .on('click', () => {
-          map.panTo([land.lat, land.lng]);
-          if (onMarkerClick) onMarkerClick(land);
-        });
-
-      markersRef.current.push(marker);
+      const el = document.createElement('div');
+      el.style.cssText = 'background:' + color + ';color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.28);border:1.5px solid rgba(255,255,255,0.5);position:relative;letter-spacing:-0.3px;transform:translateX(-50%);font-family:-apple-system,sans-serif;';
+      el.textContent = fmtPrice(land.price);
+      const arrow = document.createElement('div');
+      arrow.style.cssText = 'position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid ' + color + ';';
+      el.appendChild(arrow);
+      el.addEventListener('click', () => { map.setCenter(new window.kakao.maps.LatLng(land.lat, land.lng)); if (onMarkerClick) onMarkerClick(land); });
+      const overlay = new window.kakao.maps.CustomOverlay({ position: new window.kakao.maps.LatLng(land.lat, land.lng), content: el, yAnchor: 1 });
+      overlay.setMap(map);
+      overlaysRef.current.push(overlay);
     });
   };
 
-  /* ── 지도 초기화 (한 번만) ── */
   useEffect(() => {
-    if (mapRef.current) return;
-
-    const map = L.map(mapContainer.current, {
-      center: [36.5, 127.5],
-      zoom: 7,
-      zoomControl: false,
-    });
-
-    // 국내 지도에 최적화된 한국어 타일 (Vworld 위성/일반 무료)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
-
+    if (mapRef.current || !window.kakao || !window.kakao.maps) return;
+    const map = new window.kakao.maps.Map(mapContainer.current, { center: new window.kakao.maps.LatLng(36.5, 127.5), level: 13 });
     mapRef.current = map;
     drawMarkers(map, '전체');
-
-    return () => {
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-    };
+    return () => { mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── 필터 변경 ── */
   useEffect(() => {
     if (!mapRef.current) return;
     drawMarkers(mapRef.current, activeFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter]);
 
-  /* ── 패널 열림/닫힘 → 지도 크기 재계산 ── */
   useEffect(() => {
     if (!mapRef.current) return;
-    const t = setTimeout(() => mapRef.current.invalidateSize(), 320);
+    const t = setTimeout(() => mapRef.current.relayout(), 320);
     return () => clearTimeout(t);
   }, [panelOpen]);
 
-  /* ── 주소 검색 (Nominatim 무료 지오코딩) ── */
-  useEffect(() => {
-    if (!searchAddress || !mapRef.current) return;
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}&countrycodes=kr&limit=1`,
-      { headers: { 'Accept-Language': 'ko' } }
-    )
-      .then((r) => r.json())
-      .then((res) => {
-        if (!res.length) return;
-        const { lat, lon } = res[0];
-        const latlng = [parseFloat(lat), parseFloat(lon)];
-        mapRef.current.setView(latlng, 13);
+  const showSearchPin = (coords, label) => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.setCenter(coords);
+    map.setLevel(4);
+    if (searchPinRef.current) { searchPinRef.current.setMap(null); searchPinRef.current = null; }
+    const el = document.createElement('div');
+    el.style.cssText = 'background:#DC2626;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);position:relative;transform:translateX(-50%);font-family:-apple-system,sans-serif;';
+    el.textContent = label;
+    const arr = document.createElement('div');
+    arr.style.cssText = 'position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #DC2626;';
+    el.appendChild(arr);
+    const pin = new window.kakao.maps.CustomOverlay({ position: coords, content: el, yAnchor: 1 });
+    pin.setMap(map);
+    searchPinRef.current = pin;
+    setTimeout(() => { if (searchPinRef.current) { searchPinRef.current.setMap(null); searchPinRef.current = null; } }, 4000);
+  };
 
-        if (searchPinRef.current) mapRef.current.removeLayer(searchPinRef.current);
-        const pin = L.marker(latlng)
-          .addTo(mapRef.current)
-          .bindPopup(
-            `<div style="font-size:12px;font-weight:600;color:#166534;padding:2px 4px;">${searchAddress}</div>`,
-            { closeButton: false }
-          )
-          .openPopup();
-        searchPinRef.current = pin;
-        setTimeout(() => pin.closePopup(), 3000);
-      })
-      .catch(() => {});
+  useEffect(() => {
+    if (!searchAddress || !mapRef.current || !window.kakao || !window.kakao.maps) return;
+    const geocoder = new window.kakao.maps.services.Geocoder();
+    geocoder.addressSearch(searchAddress, (result, status) => {
+      if (status === window.kakao.maps.services.Status.OK) { showSearchPin(new window.kakao.maps.LatLng(result[0].y, result[0].x), searchAddress); return; }
+      const places = new window.kakao.maps.services.Places();
+      places.keywordSearch(searchAddress, (res, st) => { if (st === window.kakao.maps.services.Status.OK) showSearchPin(new window.kakao.maps.LatLng(res[0].y, res[0].x), searchAddress); });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchAddress]);
 
+  const zBt = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, cursor: 'pointer', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' };
+
   return (
-    <div className="relative w-full" style={{ height: resolvedHeight }}>
-
-      {/* 지목 필터 */}
-      <div className="absolute top-3 left-3 z-[1000] flex gap-1 flex-wrap">
+    <div style={{ position: 'relative', width: '100%', height: resolvedHeight }}>
+      <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 10, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         {FILTERS.map((f) => (
-          <button key={f} type="button" onClick={() => setActiveFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-sm transition-all border ${
-              activeFilter === f
-                ? 'bg-green-700 text-white border-green-700 shadow-md'
-                : 'bg-white text-slate-600 border-slate-200 hover:border-green-400'
-            }`}>
-            {f}
-          </button>
+          <button key={f} type="button" onClick={() => setActiveFilter(f)} style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: '-apple-system,sans-serif', border: activeFilter === f ? '1px solid #15803d' : '1px solid #e2e8f0', background: activeFilter === f ? '#15803d' : '#fff', color: activeFilter === f ? '#fff' : '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>{f}</button>
         ))}
-        <span className="bg-white text-slate-500 text-xs px-3 py-1.5 rounded-full shadow-sm border border-slate-200">
-          {markerCount}건
-        </span>
+        <span style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, background: '#fff', color: '#64748b', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.15)', fontFamily: '-apple-system,sans-serif' }}>{markerCount}건</span>
       </div>
-
-      {/* 지도 */}
-      <div ref={mapContainer} className="w-full h-full" />
-
-      {/* 줌 컨트롤 */}
-      <div className="absolute bottom-14 right-3 flex flex-col gap-1 z-[1000]">
-        <button type="button" onClick={() => mapRef.current?.zoomIn()}
-          className="bg-white shadow-sm w-8 h-8 rounded-md flex items-center justify-center hover:bg-slate-50 border border-slate-200 font-bold text-slate-600 text-base">+</button>
-        <button type="button" onClick={() => mapRef.current?.zoomOut()}
-          className="bg-white shadow-sm w-8 h-8 rounded-md flex items-center justify-center hover:bg-slate-50 border border-slate-200 font-bold text-slate-600 text-base">−</button>
+      <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+      <div style={{ position: 'absolute', bottom: 56, right: 12, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <button type="button" style={zBt} onClick={() => mapRef.current && mapRef.current.setLevel(mapRef.current.getLevel() - 1)}>+</button>
+        <button type="button" style={zBt} onClick={() => mapRef.current && mapRef.current.setLevel(mapRef.current.getLevel() + 1)}>-</button>
       </div>
-
-      {/* 현위치 버튼 */}
-      <button type="button"
-        onClick={() => navigator.geolocation?.getCurrentPosition((pos) => {
-          mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], 13);
-        })}
-        className="absolute bottom-3 right-3 bg-white shadow-sm w-8 h-8 rounded-md flex items-center justify-center hover:bg-slate-50 border border-slate-200 z-[1000]">
-        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
+      <button type="button" onClick={() => navigator.geolocation?.getCurrentPosition((pos) => { if (!mapRef.current) return; mapRef.current.setCenter(new window.kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude)); mapRef.current.setLevel(4); })} style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 10, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
+        <svg width="16" height="16" fill="none" stroke="#64748b" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       </button>
-
-      {/* 범례 */}
-      <div className="absolute bottom-3 left-3 bg-white rounded-lg shadow-sm px-3 py-2 text-xs border border-slate-200 z-[1000]">
-        <div className="flex gap-3 items-center">
-          {[
-            { l: '대지', c: '#1E6B3C' },
-            { l: '임야', c: '#40916C' },
-            { l: '농지', c: '#D97706' },
-            { l: '공장', c: '#6B7280' },
-          ].map((item) => (
-            <span key={item.l} className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: item.c }} />
-              <span className="text-slate-500">{item.l}</span>
-            </span>
-          ))}
-        </div>
+      <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 10, background: '#fff', borderRadius: 8, padding: '6px 12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.15)', display: 'flex', gap: 12, alignItems: 'center', fontFamily: '-apple-system,sans-serif' }}>
+        {[{ l: '대지', c: '#1E6B3C' }, { l: '임야', c: '#40916C' }, { l: '농지', c: '#D97706' }, { l: '공장', c: '#6B7280' }].map((item) => (
+          <span key={item.l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#64748b' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.c, display: 'inline-block' }} />{item.l}
+          </span>
+        ))}
       </div>
     </div>
   );
