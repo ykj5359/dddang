@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/dddang/static/css/main.745402a1.css",
+    "main.js": "/dddang/static/js/main.d1bb1392.js",
+    "index.html": "/dddang/index.html",
+    "main.745402a1.css.map": "/dddang/static/css/main.745402a1.css.map",
+    "main.d1bb1392.js.map": "/dddang/static/js/main.d1bb1392.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.745402a1.css",
+    "static/js/main.d1bb1392.js"
+  ]
+}
