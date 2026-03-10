@@ -60,10 +60,24 @@ function MapView({ searchAddress, onMarkerClick, panelOpen, height = 520 }) {
   };
 
   useEffect(() => {
-    if (mapRef.current || !window.kakao || !window.kakao.maps) return;
-    const map = new window.kakao.maps.Map(mapContainer.current, { center: new window.kakao.maps.LatLng(36.5, 127.5), level: 13 });
-    mapRef.current = map;
-    drawMarkers(map, '전체');
+    if (mapRef.current) return;
+
+    const initMap = () => {
+      if (mapRef.current) return;
+      const map = new window.kakao.maps.Map(mapContainer.current, {
+        center: new window.kakao.maps.LatLng(36.5, 127.5),
+        level: 13,
+      });
+      mapRef.current = map;
+      drawMarkers(map, '전체');
+    };
+
+    if (window.kakao && window.kakao.maps) {
+      initMap();
+    } else if (window.kakao) {
+      window.kakao.maps.load(initMap);
+    }
+
     return () => { mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
