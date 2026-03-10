@@ -62,23 +62,29 @@ function MapView({ searchAddress, onMarkerClick, panelOpen, height = 520 }) {
   useEffect(() => {
     if (mapRef.current) return;
 
-    const initMap = () => {
-      if (mapRef.current) return;
-      const map = new window.kakao.maps.Map(mapContainer.current, {
-        center: new window.kakao.maps.LatLng(36.5, 127.5),
-        level: 13,
+    let timer;
+
+    const tryInit = () => {
+      if (!window.kakao) {
+        // kakao SDK 스크립트 아직 로딩 중 → 재시도
+        timer = setTimeout(tryInit, 150);
+        return;
+      }
+      // kakao는 있지만 maps API는 load() 호출 필요
+      window.kakao.maps.load(() => {
+        if (mapRef.current || !mapContainer.current) return;
+        const map = new window.kakao.maps.Map(mapContainer.current, {
+          center: new window.kakao.maps.LatLng(36.5, 127.5),
+          level: 13,
+        });
+        mapRef.current = map;
+        drawMarkers(map, '전체');
       });
-      mapRef.current = map;
-      drawMarkers(map, '전체');
     };
 
-    if (window.kakao && window.kakao.maps) {
-      initMap();
-    } else if (window.kakao) {
-      window.kakao.maps.load(initMap);
-    }
+    tryInit();
 
-    return () => { mapRef.current = null; };
+    return () => { clearTimeout(timer); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
